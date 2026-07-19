@@ -153,3 +153,128 @@ def set_advisor_model():
     _active_model["name"] = model
     logger.info(f"Advisor model set to: {model}")
     return jsonify({"success": True, "active_model": model})
+
+
+# ── Greeks AI endpoints (called by greeks.html) ──────────────────────────────
+
+@app.route("/ai/status", methods=["GET"])
+def ai_status():
+    """Ollama status for greeks.html — returns {online, models, active_model}."""
+    import urllib.request, json as _json
+    last_err = None
+    for host in ["http://127.0.0.1:11434", "http://localhost:11434"]:
+        try:
+            with urllib.request.urlopen(f"{host}/api/tags", timeout=4) as r:
+                data   = _json.loads(r.read())
+                models = [m["name"] for m in data.get("models", [])]
+                return jsonify({"online": True, "models": models,
+                                "active_model": _active_model["name"]})
+        except Exception as e:
+            last_err = str(e)
+            continue
+    return jsonify({"online": False, "models": [], "active_model": "",
+                    "error": last_err or "Ollama not reachable"})
+
+
+@app.route("/ai/greeks", methods=["POST"])
+def ai_greeks():
+    """Generate a plain-English trade thesis from a Greeks snapshot via Ollama."""
+    import urllib.request, json as _json, time as _t
+    from srv.core import OLLAMA_URL
+
+    if not _ollama_reachable():
+        return jsonify({"error": "Ollama offline — run: ollama serve"}), 503
+
+    d = request.get_json() or {}
+
+    ticker    = d.get("ticker", "?")
+    strat     = d.get("strategy_name", d.get("direction", "") + " " + d.get("type", ""))
+    S         = d.get("S", 0)
+    K         = d.get("K", 0)
+    DTE       = d.get("DTE", 0)
+    IV        = d.get("IV", 0)
+    price     = d.get("price", 0)
+    breakeven = d.get("breakeven", 0)
+    delta     = d.get("delta", 0)
+    gamma     = d.get("gamma", 0)
+    theta     = d.get("theta_dollar", 0)
+    vega      = d.get("vega_dollar", 0)
+    contracts = d.get("contracts", 1)
+    entry     = d.get("entry_price", 0)
+    model     = d.get("model") or _active_model["name"]
+
+    system_prompt = (
+        "You are a concise options trading analyst. "
+        "Respond ONLY with a JSON object — no markdown, no explanation outside the JSON. "
+        "Keys required: "
+        "\"thesis\" (2-3 sentences: directional bias and setup rationale), "
+        "\"win_condition\" (1 sentence: what must happen for max profit), "
+        "\"kill_condition\" (1 sentence: specific price/event that forces a roll or close), "
+        "\"greeks_verdict\" (1 sentence: which greek dominates and what it means), "
+        "\"theta_power\" (1 sentence: daily decay in dollars and how many DTE to break even), "
+        "\"summary\" (1 short sentence: bottom-line take), "
+        "\"wheel_fit\" (one of: EXCELLENT, GOOD, FAIR, POOR)."
+    )
+
+    user_prompt = (
+        f"Ticker: {ticker}  Strategy: {strat}  Contracts: {contracts}\n"
+        f"Stock price: ${S}  Strike: ${K}  DTE: {DTE}  IV: {IV}%\n"
+        f"Option price: ${price}  Breakeven: ${breakeven}\n"
+        f"Entry credit/debit: ${entry} per contract\n"
+        f"Greeks — Delta: {delta}  Gamma: {gamma}  "
+        f"Theta ($/day): ${theta}  Vega ($/1% IV): ${vega}\n\n"
+        "Reply with the JSON object only."
+    )
+
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user",   "content": user_prompt},
+    ]
+
+    payload = _json.dumps({
+        "model":    model,
+        "stream":   False,
+        "messages": messages,
+        "options":  {"temperature": 0.2, "top_p": 0.9},
+    }).encode()
+
+    t0 = _t.time()
+    try:
+        req = urllib.request.Request(
+            OLLAMA_URL, data=payload,
+            headers={"Content-Type": "application/json"}, method="POST"
+        )
+        with urllib.request.urlopen(req, timeout=300) as resp:
+            raw  = _json.loads(resp.read())
+            text = raw.get("message", {}).get("content", "").strip()
+            usage = {
+                "prompt_tokens":     raw.get("prompt_eval_count", 0),
+                "completion_tokens": raw.get("eval_count", 0),
+                "total_tokens":      raw.get("prompt_eval_count", 0) + raw.get("eval_count", 0),
+                "total_duration_ms": round(raw.get("total_duration", 0) / 1e6),
+                "eval_duration_ms":  round(raw.get("eval_duration",  0) / 1e6),
+            }
+            # Parse JSON from model response; fall back gracefully
+            try:
+                # Strip possible markdown fences
+                clean = text.strip()
+                if clean.startswith("```"):
+                    clean = clean.split("```")[1]
+                    if clean.startswith("json"):
+                        clean = clean[4:]
+                parsed = _json.loads(clean)
+            except Exception:
+                parsed = {"thesis": text}
+
+            parsed["_meta"] = {
+                "system_prompt": system_prompt,
+                "user_prompt":   user_prompt,
+                "usage":         usage,
+                "model":         model,
+            }
+            logger.info(f"ai/greeks {ticker} {strat} → {usage['total_tokens']} tokens "
+                        f"in {round(_t.time()-t0,1)}s")
+            return jsonify(parsed)
+    except Exception as e:
+        logger.warning(f"ai/greeks error: {e}")
+        return jsonify({"error": str(e)}), 500
