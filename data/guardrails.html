@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wheel Strategy — Universal Guardrails &amp; Playbook</title>
+<style>
+  :root{--bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--border:#30363d;--text:#e6edf3;--muted:#7d8590;
+    --green:#3fb950;--red:#f85149;--yellow:#d29922;--blue:#58a6ff;--purple:#bc8cff;
+    --orange:#f0883e;--teal:#39d353;--pink:#f778ba;}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;line-height:1.55;padding:24px;max-width:1300px;margin:0 auto}
+  h1{font-size:24px;font-weight:700;color:var(--blue);margin-bottom:4px}
+  h2{font-size:17px;font-weight:700;margin:32px 0 14px;padding:10px 14px;border-radius:6px;color:var(--text)}
+  h2.A{background:linear-gradient(90deg,rgba(63,185,80,.18),transparent);border-left:4px solid var(--green)}
+  h2.B{background:linear-gradient(90deg,rgba(210,153,34,.18),transparent);border-left:4px solid var(--yellow)}
+  h2.C{background:linear-gradient(90deg,rgba(248,81,73,.18),transparent);border-left:4px solid var(--red)}
+  h2.D{background:linear-gradient(90deg,rgba(88,166,255,.18),transparent);border-left:4px solid var(--blue)}
+  h2.E{background:linear-gradient(90deg,rgba(188,140,255,.18),transparent);border-left:4px solid var(--purple)}
+  h2.F{background:linear-gradient(90deg,rgba(57,211,83,.18),transparent);border-left:4px solid var(--teal)}
+  h2.G{background:linear-gradient(90deg,rgba(248,81,73,.22),transparent);border-left:4px solid var(--red)}
+  h2.H{background:linear-gradient(90deg,rgba(240,136,62,.18),transparent);border-left:4px solid var(--orange)}
+  h3{font-size:13px;font-weight:600;color:var(--text);margin:16px 0 8px;padding-bottom:4px;border-bottom:1px dashed var(--border)}
+  .meta{color:var(--muted);font-size:12px;margin-bottom:18px}
+  table{width:100%;border-collapse:collapse;font-size:12px;margin:8px 0 14px}
+  th{background:var(--bg3);color:var(--muted);text-transform:uppercase;font-size:10px;font-weight:600;letter-spacing:.05em;padding:8px 10px;text-align:left;border-bottom:1px solid var(--border)}
+  td{padding:7px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
+  tr:hover td{background:rgba(255,255,255,.02)}
+  .card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:14px}
+  .checklist{list-style:none;padding:0;margin:6px 0}
+  .checklist li{padding:4px 0 4px 24px;position:relative;font-size:12.5px}
+  .checklist li::before{content:'☐';position:absolute;left:0;top:3px;color:var(--blue);font-size:14px}
+  .checklist li.danger::before{color:var(--red);content:'⛔'}
+  .why{background:rgba(88,166,255,.06);border-left:3px solid var(--blue);padding:8px 12px;margin:8px 0 14px;font-size:12px;color:var(--muted);border-radius:0 4px 4px 0}
+  .why strong{color:var(--blue)}
+  .note{background:rgba(88,166,255,.08);border:1px solid rgba(88,166,255,.25);border-radius:6px;padding:10px 14px;font-size:12px;color:var(--muted);margin:10px 0}
+  .note strong{color:var(--blue)}
+  .warn{background:rgba(210,153,34,.07);border:1px solid rgba(210,153,34,.25);border-radius:6px;padding:10px 14px;font-size:12px;color:var(--muted);margin:10px 0}
+  .warn strong{color:var(--yellow)}
+  .danger{background:rgba(248,81,73,.07);border:1px solid rgba(248,81,73,.3);border-radius:6px;padding:10px 14px;font-size:12px;color:var(--muted);margin:10px 0}
+  .danger strong{color:var(--red)}
+  .success{background:rgba(57,211,83,.08);border:1px solid rgba(57,211,83,.3);border-radius:6px;padding:10px 14px;font-size:12px;color:var(--muted);margin:10px 0}
+  .success strong{color:var(--teal)}
+  .g{color:var(--green);font-weight:600}.r{color:var(--red);font-weight:600}.m{color:var(--muted)}
+  .b{color:var(--blue);font-weight:600}.y{color:var(--yellow);font-weight:600}.p{color:var(--purple);font-weight:600}
+  .o{color:var(--orange);font-weight:600}.t{color:var(--teal);font-weight:600}
+  .tree{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:14px;font-family:Consolas,'Courier New',monospace;font-size:11.5px;line-height:1.5;color:var(--muted);white-space:pre;overflow-x:auto;margin:10px 0}
+  footer{margin-top:32px;padding-top:14px;border-top:1px solid var(--border);color:var(--muted);font-size:11px}
+  .toc{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:20px}
+  .toc h3{border:none;margin:0 0 8px}
+  .toc a{color:var(--blue);text-decoration:none;font-size:12px;display:inline-block;margin:3px 12px 3px 0}
+  .toc a:hover{text-decoration:underline}
+  @media print{body{padding:10px}h1{font-size:18px}}
+</style>
+</head>
+<body>
+
+<h1>📚 Wheel Strategy — Universal Guardrails &amp; Playbook</h1>
+<p class="meta">Reusable across any position · Generated June 11, 2026 · Based on documented wheel-strategy best practices + IV-regime exit framework</p>
+
+<div class="note">
+<strong>How to Use:</strong> This is a reusable reference checklist. Apply to ANY wheel position (current or future). The accompanying <a href="wheel_checklist_21dte_positions_2026-06-11.html" style="color:var(--blue)">per-position cards</a> use these rules applied to your specific 5 wheels.
+</div>
+
+<div class="toc">
+  <h3>📑 Table of Contents</h3>
+  <a href="#phaseA">A. Pre-Entry</a>
+  <a href="#phaseB">B. Mid-Cycle Monitoring</a>
+  <a href="#phaseC">C. Exit Decisions</a>
+  <a href="#phaseD">D. Roll Decision Tree</a>
+  <a href="#phaseE">E. Assignment Management</a>
+  <a href="#phaseF">F. Capital Discipline</a>
+  <a href="#phaseG">G. Mistakes to Avoid</a>
+  <a href="#phaseH">H. Weekly Routine</a>
+  <a href="#tree">Quick Decision Tree</a>
+</div>
+
+<!-- ============== PHASE A ============== -->
+<h2 id="phaseA" class="A">🟢 PHASE A — Pre-Entry (Before Opening Any Wheel)</h2>
+
+<div class="card">
+<h3>✅ Capital Check</h3>
+<ul class="checklist">
+  <li>Do I have enough collateral (cash or BP) for this position?</li>
+  <li>Will this position keep cash buffer ≥ $300?</li>
+  <li>Is concentration ≤ 5% of account in any single ticker?</li>
+  <li>Total deployed capital ≤ 80% of NAV?</li>
+</ul>
+<div class="why"><strong>Why:</strong> Wheel strategy survives drawdowns only with reserves. Over-deployment forces forced liquidation at the worst time. The 5% ticker rule prevents single-stock blowups from killing the account.</div>
+
+<h3>✅ Ticker Eligibility</h3>
+<ul class="checklist">
+  <li>Stock price ≤ "comfortable trade" threshold (5% of account)?</li>
+  <li>Liquidity check: Open Interest ≥ 500 at chosen strike</li>
+  <li>Bid-ask spread ≤ 10% of mid price?</li>
+  <li>Stock has options market (not all stocks do)</li>
+  <li>Beta acceptable (not extreme like meme stocks)</li>
+  <li>I'd be <strong>comfortable owning 100 shares</strong> if assigned?</li>
+</ul>
+<div class="why"><strong>Why:</strong> Wide spreads eat your premium. Thin OI means you can't get out cleanly. The "comfortable owning" test catches the single biggest beginner mistake — selling puts on stocks you'd never actually buy.</div>
+
+<h3>✅ Strike Selection</h3>
+<ul class="checklist">
+  <li>Strike chosen for delta target (-0.20 to -0.30 for safer, ATM for higher yield)</li>
+  <li>Strike provides OTM cushion ≥ 5% (preferably 8-12%)</li>
+  <li>Capital efficiency: premium ÷ collateral ≥ 3% per cycle (≥36% annualized)</li>
+</ul>
+<div class="why"><strong>Why:</strong> Delta tells you probability of being assigned. -0.30 = 30% chance. -0.50 = 50% (ATM). Pick based on your risk tolerance. The 3% per cycle minimum filters out trades not worth the capital lockup.</div>
+
+<h3>✅ Expiry Selection</h3>
+<ul class="checklist">
+  <li>Target 35-45 DTE for theta sweet spot</li>
+  <li>Use standard MONTHLY expirations (3rd Friday of month)</li>
+  <li>Avoid weekly options unless explicitly desired</li>
+  <li>Expiry does NOT include any earnings date for the underlying</li>
+</ul>
+<div class="why"><strong>Why:</strong> 35-45 DTE captures the cleanest theta decay. Monthlies have the best liquidity. Weekly options have wider spreads and pin-risk. Earnings inside expiry = IV crush + gap risk that destroys premium math.</div>
+
+<h3>✅ Calendar/Event Risk</h3>
+<ul class="checklist">
+  <li>No earnings report within 14 days of expiry</li>
+  <li>No ex-dividend date in window (for short calls)</li>
+  <li>No FOMC meeting on or near expiry week</li>
+  <li>No known major event (CPI release, election) within 5 days of expiry</li>
+</ul>
+<div class="why"><strong>Why:</strong> Earnings can move stocks ±15% overnight, instantly putting puts ITM. Ex-div on short calls causes early assignment risk. Macro events can spike IV (good for entries, bad for held positions).</div>
+
+<h3>✅ IV Regime Check</h3>
+<ul class="checklist">
+  <li>Check current IV at chosen strike</li>
+  <li><strong>HIGH IV (&gt;25%)</strong> → use 50% profit target, no DTE rule</li>
+  <li><strong>BORDERLINE (18-25%)</strong> → use 50% target + 14-21 DTE backstop</li>
+  <li><strong>LOW IV (&lt;18%)</strong> → use 50% target only (no DTE), let theta finish</li>
+</ul>
+<div class="why"><strong>Why:</strong> Different IV regimes need different exit rules. High IV = fast theta, 50% target hits quickly. Low IV = slow theta, DTE-based exits abandon too much premium. See <code>memory/feedback_exit_rules.md</code> for the full framework.</div>
+
+<h3>✅ Order Construction</h3>
+<ul class="checklist">
+  <li>Limit order (NEVER market for options)</li>
+  <li>Limit price = mid or slightly above (give 1-2 cents over mid)</li>
+  <li>Duration: GTC (so it works overnight if not immediately filled)</li>
+  <li>Single contract first; scale only after confirming fill behavior</li>
+</ul>
+<div class="why"><strong>Why:</strong> Options spreads are wide enough that market orders can fill 10-20% worse than mid. GTC orders catch overnight liquidity. Starting with 1 contract validates your fill price before scaling.</div>
+</div>
+
+<!-- ============== PHASE B ============== -->
+<h2 id="phaseB" class="B">🟡 PHASE B — Mid-Cycle Monitoring</h2>
+
+<div class="card">
+<h3>✅ Daily Check (5 min)</h3>
+<ul class="checklist">
+  <li>Has price moved significantly? (±5%+)</li>
+  <li>Did the underlying drop into ITM territory?</li>
+  <li>Any breaking news on the underlying?</li>
+  <li>Any change in option's bid-ask spread (liquidity check)?</li>
+</ul>
+
+<h3>✅ Weekly Check (15 min)</h3>
+<ul class="checklist">
+  <li>Did BTC profit target hit?</li>
+  <li>Re-check earnings calendar (sometimes announced/changed)</li>
+  <li>Re-check ex-dividend dates</li>
+  <li>Track DTE vs the 21 DTE threshold</li>
+</ul>
+
+<h3>🚨 Red Flags (act immediately if hit)</h3>
+<ul class="checklist">
+  <li class="danger">Stock breaks key technical support</li>
+  <li class="danger">Delta crossed -0.50 (now ITM territory)</li>
+  <li class="danger">Position P/L worse than -50% of credit received</li>
+  <li class="danger">Major news/earnings surprise</li>
+  <li class="danger">Liquidity dries up (OI dropping, spread widening)</li>
+</ul>
+<div class="why"><strong>Why:</strong> Wheel positions are short premium — they have positive theta but negative gamma. The longer a position stays profitable, the safer it is. Red flags indicate gamma is winning. Acting early is better than panicking late.</div>
+</div>
+
+<!-- ============== PHASE C ============== -->
+<h2 id="phaseC" class="C">🔴 PHASE C — Exit Decisions</h2>
+
+<div class="card">
+<h3>Path 1: BTC at 50% Target (Primary)</h3>
+<ul class="checklist">
+  <li>Did automated GTC BTC order fill?</li>
+  <li>Did I book the realized profit in memory?</li>
+  <li>Is capital now available for next deployment?</li>
+  <li>Place new wheel entry within 1-2 days</li>
+</ul>
+
+<h3>Path 2: Approaching 21 DTE</h3>
+<ul class="checklist">
+  <li>Has 50% target NOT filled by 21 DTE?</li>
+  <li>Is position still in HIGH IV regime?
+    <ul style="margin:4px 0 4px 22px">
+      <li>If yes: 50% target still valid; consider holding 7 more days</li>
+      <li>If shifted to BORDERLINE/LOW: consider 21 DTE exit</li>
+    </ul>
+  </li>
+  <li>Calculate "premium remaining" vs "premium captured so far"</li>
+  <li>If captured ≥40%: consider closing for safety</li>
+  <li>If captured &lt;30%: more value in letting it work to expiry</li>
+</ul>
+
+<h3>Path 3: Defensive Close (Roll/Loss)</h3>
+<ul class="checklist">
+  <li>Is position worse than -50% of credit?</li>
+  <li>Has underlying thesis changed?</li>
+  <li>Is there a better opportunity for the capital?</li>
+  <li>Calculate cost to close vs continue holding</li>
+</ul>
+<div class="why"><strong>Why:</strong> The 50% target is mathematically optimal for high-IV environments because the remaining 50% of premium decays much slower than the first 50%. Cutting at 21 DTE protects against gamma but only matters when premium remaining is small.</div>
+</div>
+
+<!-- ============== PHASE D ============== -->
+<h2 id="phaseD" class="D">🔄 PHASE D — Roll Decision Tree</h2>
+
+<div class="card">
+<h3>Same Stock, Next Cycle (Most Common)</h3>
+<ul class="checklist">
+  <li>Pick next standard monthly expiry (next 3rd Friday)</li>
+  <li>Re-evaluate strike based on current price:
+    <ul style="margin:4px 0 4px 22px">
+      <li>Stock UP → roll up strike (capture richer premium)</li>
+      <li>Stock UNCHANGED → same strike</li>
+      <li>Stock DOWN → roll down strike (defensive)</li>
+    </ul>
+  </li>
+  <li>Re-verify earnings clear of new expiry</li>
+  <li>Re-verify IV regime</li>
+  <li>Set new GTC BTC at 50% target</li>
+</ul>
+
+<h3>Switch Stock</h3>
+<ul class="checklist">
+  <li>Has fundamental thesis on original stock changed?</li>
+  <li>Better risk-reward elsewhere (from latest screener)?</li>
+  <li>Diversification considerations met?</li>
+</ul>
+
+<h3>Skip a Cycle</h3>
+<ul class="checklist">
+  <li>All candidates have earnings risk → wait</li>
+  <li>Market in unusual state (FOMC week, election, etc.) → wait</li>
+  <li>Cash needed for assignment management</li>
+</ul>
+<div class="why"><strong>Why:</strong> Rolling forward with a re-evaluated strike isn't just mechanics — it incorporates new market intelligence. Same-strike on autopilot ignores stock movement. Sometimes the right move is to skip the cycle entirely.</div>
+</div>
+
+<!-- ============== PHASE E ============== -->
+<h2 id="phaseE" class="E">🟣 PHASE E — Assignment Management (If Put Goes ITM)</h2>
+
+<div class="card">
+<h3>Day After Assignment</h3>
+<ul class="checklist">
+  <li>Confirm 100 shares received in account</li>
+  <li>Calculate effective cost basis: <code>strike - premium received</code></li>
+  <li>Update memory/project_state.md with new position</li>
+  <li>Decide: hold for recovery vs sell CC immediately?</li>
+</ul>
+
+<h3>If Selling Covered Call (Cycle 2 of Wheel)</h3>
+<ul class="checklist">
+  <li>Choose strike at or above cost basis (so call-away = profit)</li>
+  <li>30-45 DTE expiry</li>
+  <li>Premium ≥ 1% of stock price per cycle</li>
+  <li>Place GTC BTC at 50% profit target</li>
+</ul>
+
+<h3>If Holding Shares Bare (No CC)</h3>
+<ul class="checklist">
+  <li>Only if expecting near-term rebound</li>
+  <li>Set price alert at cost basis level</li>
+  <li>Re-evaluate daily/weekly</li>
+  <li>Have exit plan (when do I cut losses?)</li>
+</ul>
+
+<h3>If Called Away (CC Cycle Closed)</h3>
+<ul class="checklist">
+  <li>Calculate cycle profit (premium + share gain)</li>
+  <li>Update memory</li>
+  <li>Decide: re-buy same stock for new wheel OR redeploy capital elsewhere?</li>
+</ul>
+<div class="why"><strong>Why:</strong> Assignment isn't failure — it's the SECOND half of the wheel. The whole strategy assumes you'd be happy to own these stocks at the strike price. The CC cycle that follows often makes more money than the original put cycle.</div>
+</div>
+
+<!-- ============== PHASE F ============== -->
+<h2 id="phaseF" class="F">💰 PHASE F — Capital Discipline (Account-Level)</h2>
+
+<div class="card">
+<h3>Position Sizing Rules</h3>
+<ul class="checklist">
+  <li>Max 10 concurrent wheels (operational complexity)</li>
+  <li>Max 8% of NAV in any single position</li>
+  <li>Max 80% total deployed (always keep 20% buffer)</li>
+  <li>Keep $300+ minimum cash for emergency</li>
+</ul>
+
+<h3>Diversification Targets</h3>
+<ul class="checklist">
+  <li>No more than 30% in any sector</li>
+  <li>Mix of stock prices ($5-$35 ideal range)</li>
+  <li>Mix of betas (some defensive + some aggressive)</li>
+  <li>Avoid correlated tickers (don't have CLSK + MARA + RIOT all simultaneously)</li>
+</ul>
+
+<h3>Income Targets</h3>
+<ul class="checklist">
+  <li>Monthly premium goal: ≥ 1.5% of account value</li>
+  <li>Annualized goal: 18-25% net premium income</li>
+  <li>Reinvestment: roll all premiums into new wheels (compounding)</li>
+</ul>
+<div class="why"><strong>Why:</strong> Wheel strategies fail when account is overexposed. Concentration risk means one bad stock can wipe out months of profits. The 80% deployment cap ensures you can survive a drawdown without forced liquidations.</div>
+</div>
+
+<!-- ============== PHASE G ============== -->
+<h2 id="phaseG" class="G">⛔ PHASE G — Common Mistakes to Avoid</h2>
+
+<div class="card">
+<h3>Discipline Checks</h3>
+<ul class="checklist">
+  <li class="danger">NEVER use market orders for options</li>
+  <li class="danger">NEVER sell naked calls (unlimited risk)</li>
+  <li class="danger">NEVER trade through major earnings without understanding the risk</li>
+  <li class="danger">NEVER chase trades after a missed entry</li>
+  <li class="danger">NEVER scale up a losing position to "average down"</li>
+  <li class="danger">NEVER skip the GTC BTC order at entry</li>
+  <li class="danger">NEVER hold to expiry hoping for the last 5%</li>
+  <li class="danger">NEVER ignore the IV regime when setting exit rules</li>
+  <li class="danger">NEVER override your own rules for "this one special case"</li>
+</ul>
+
+<h3>Documentation Discipline</h3>
+<ul class="checklist">
+  <li>Update memory/project_state.md after every fill</li>
+  <li>Update memory/open_tasks.md when status changes</li>
+  <li>Save trade records (order numbers, prices, dates)</li>
+  <li>Run weekly screener (Wednesdays)</li>
+  <li>Backup full project monthly</li>
+</ul>
+<div class="why"><strong>Why:</strong> These mistakes don't just hurt occasionally — they're how accounts get wiped out. Discipline is what separates profitable wheelers from people who blow up. Documentation lets you analyze WHY trades worked or failed.</div>
+</div>
+
+<!-- ============== PHASE H ============== -->
+<h2 id="phaseH" class="H">🗓️ PHASE H — Weekly Routine</h2>
+
+<div class="card">
+<h3>Monday</h3>
+<ul class="checklist">
+  <li>Check all positions at open</li>
+  <li>Review weekend news for any holdings</li>
+  <li>Update earnings calendar</li>
+</ul>
+
+<h3>Wednesday</h3>
+<ul class="checklist">
+  <li>Run wheel screener (<code>wheel_screener.ps1</code>)</li>
+  <li>Review screener output for new candidates</li>
+  <li>Identify any positions approaching 21 DTE</li>
+</ul>
+
+<h3>Friday</h3>
+<ul class="checklist">
+  <li>End-of-week P/L review</li>
+  <li>Plan next week's actions</li>
+  <li>Backup memory files</li>
+</ul>
+
+<h3>Monthly</h3>
+<ul class="checklist">
+  <li>Full account review vs forecast</li>
+  <li>Backup full C:\Claude Trading Bot to zip</li>
+  <li>Re-evaluate strategy vs goals</li>
+  <li>Tax-loss harvesting check (if applicable)</li>
+</ul>
+<div class="why"><strong>Why:</strong> Consistent rhythm beats sporadic monitoring. The weekly screener catches new opportunities and warns of stale positions. Monthly backups protect months of memory data from disk failures.</div>
+</div>
+
+<!-- ============== DECISION TREE ============== -->
+<h2 id="tree" class="D">🌳 Quick Decision Tree (Print Reference)</h2>
+
+<div class="card">
+<div class="tree">NEW POSITION OPPORTUNITY?
+  ├─ Capital available?
+  │   ├─ NO  → SKIP or wait for capital event
+  │   └─ YES → continue
+  ├─ Stock in screener A/B tier?
+  │   ├─ NO  → SKIP
+  │   └─ YES → continue
+  ├─ Earnings within window?
+  │   ├─ YES → CHECK ALT or SKIP
+  │   └─ NO  → continue
+  ├─ IV regime check
+  │   ├─ HIGH       → 50% target, no DTE rule
+  │   ├─ BORDERLINE → 50% + 21 DTE backstop
+  │   └─ LOW        → 50% only
+  └─ EXECUTE entry with GTC BTC
+
+EXISTING POSITION CHECK?
+  ├─ BTC filled? → BOOK profit, redeploy
+  ├─ At 21 DTE?
+  │   ├─ HIGH IV  → may extend if 50% close
+  │   └─ MED/LOW  → close + roll
+  ├─ ITM at any time?
+  │   ├─ Mild               → monitor
+  │   ├─ Deep + still time  → consider roll
+  │   └─ At expiry          → accept assignment, start CC wheel
+  └─ Earnings approaching? → close OR roll past earnings
+</div>
+</div>
+
+<!-- ============== SUMMARY ============== -->
+<h2 class="A">🎯 The Wheel Strategy in 60 Seconds</h2>
+
+<div class="card">
+<table>
+  <thead>
+    <tr><th>Step</th><th>Action</th><th>Goal</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>1</strong></td><td>Sell cash-secured put 35-45 DTE on a stock you'd own</td><td>Collect premium ($30-100)</td></tr>
+    <tr><td><strong>2</strong></td><td>Place GTC BTC at 50% profit immediately</td><td>Lock in target exit</td></tr>
+    <tr><td><strong>3</strong></td><td>If BTC fills → repeat with new strike/expiry</td><td>~10 cycles/year per wheel</td></tr>
+    <tr><td><strong>4</strong></td><td>If assigned → receive 100 shares at strike price</td><td>Cost basis = strike - premium</td></tr>
+    <tr><td><strong>5</strong></td><td>Sell covered call at or above cost basis</td><td>Continue collecting premium</td></tr>
+    <tr><td><strong>6</strong></td><td>If shares called away → cycle complete, profit</td><td>Repeat with new put or new stock</td></tr>
+  </tbody>
+</table>
+<div class="success">
+<strong>Net effect:</strong> You earn premium whether the stock goes up, sideways, or moderately down. The only loss scenarios are major crashes in the underlying (which is why we never wheel stocks we wouldn't want to own).
+</div>
+</div>
+
+<footer>
+Generated June 11, 2026 · Universal Wheel Strategy Playbook<br>
+Companion docs: <a href="wheel_checklist_21dte_positions_2026-06-11.html" style="color:var(--purple)">Per-Position 21 DTE Checklist</a> · <a href="wheel_forecast_2026-06-11_jun-dec.html" style="color:var(--purple)">12-Month Forecast</a> · <a href="wheel_income_projection_2037_v5.html" style="color:var(--purple)">v5 Lifetime Projection</a><br>
+For Claude/AI session rules, see <code>init/claude.md</code>. For PowerShell helpers, see <code>init/skills.md</code>. For active state, see <code>memory/project_state.md</code> and <code>memory/open_tasks.md</code>.
+</footer>
+
+</body>
+</html>

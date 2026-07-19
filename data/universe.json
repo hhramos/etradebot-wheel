@@ -1,0 +1,36 @@
+{
+  "description": "ETradeBot wheel strategy ticker universe. Edit to add/remove tickers.",
+  "updated_at":  "2026-06-05",
+  "tiers": {
+    "micro":  "strike < $10 — fits most contracts at small account size",
+    "small":  "strike $10–$20 — balanced premium and contract count",
+    "mid":    "strike $20–$50 — higher quality, fewer contracts",
+    "large":  "strike > $50 — 1 contract at a time, needs larger account"
+  },
+  "tickers": [
+    "SOFI", "NOK", "F",    "SOUN", "DOCS", "CCL",
+    "PFE",  "VZ",  "T",    "WFC",  "BAC",  "USB",
+    "KO",   "MO",  "CSCO", "IBM",  "QCOM", "TXN",
+    "XOM",  "CVX", "DUK",  "SO",   "WMT",  "TGT",
+    "HD",   "LOW", "ABBV", "MRK",  "BMY",  "AMGN",
+    "JPM",  "C",   "GS",   "PEP",  "MCD",  "JNJ",
+    "PG",   "PM",  "NEE",  "D"
+  ],
+  "tier_map": {
+    "SOUN": "micro",  "NOK": "micro",   "F":    "micro",
+    "SOFI": "small",  "DOCS": "small",  "CCL":  "small",
+    "PFE":  "small",  "T":    "small",  "BAC":  "small",
+    "WFC":  "mid",    "USB":  "mid",    "KO":   "mid",
+    "MO":   "mid",    "VZ":   "mid",    "WMT":  "mid",
+    "TGT":  "mid",    "CSCO": "mid",    "IBM":  "mid",
+    "MRK":  "mid",    "BMY":  "mid",    "ABBV": "mid",
+    "JPM":  "large",  "GS":   "large",  "QCOM": "large",
+    "TXN":  "large",  "NEE":  "large",  "HD":   "large"
+  },
+  "excluded": [],
+  "notes": {
+    "OBTC": "crypto ETF — high IV, not on standard screener",
+    "YOU":  "speculative — monitor manually",
+    "O":    "REIT — requires margin for options, check account type"
+  }
+}

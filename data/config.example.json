@@ -1,0 +1,173 @@
+{
+  "model": "llama3.2:latest",
+  "model_deep": "qwen2.5:7b",
+  "schedule_et": {
+    "premarket": "09:15",
+    "morning": "09:35",
+    "preclose": "15:45",
+    "postclose": "16:15",
+    "monitor_interval_mins": 30
+  },
+  "rules": {
+    "max_wheels": 10,
+    "max_position_pct": 0.08,
+    "max_deployed_pct": 0.8,
+    "min_cash_reserve": 300,
+    "min_deploy_amount": 300,
+    "delta_range": [
+      0.18,
+      0.35
+    ],
+    "dte_range": [
+      28,
+      50
+    ],
+    "dte_roll_threshold": 14,
+    "profit_target_pct": 0.5,
+    "roll_delta_mult": 1.5,
+    "earnings_blackout_days": 7,
+    "min_open_interest": 100,
+    "max_spread_pct": 0.3,
+    "min_premium": 0.15,
+    "max_contracts_ticker": 10,
+    "min_fisher": 7,
+    "min_wheel_grade": "B"
+  },
+  "reinvestment": {
+    "favor_lower_price": true,
+    "deploy_if_idle_mins": 60,
+    "quality_fallback_mins": 120,
+    "force_reenter_mins": 240,
+    "min_deploy_amount": 300,
+    "efficiency_weight": 0.4,
+    "quality_weight": 0.4,
+    "fit_bonus_weight": 0.2,
+    "min_fisher": 7,
+    "min_wheel_grade": "B",
+    "min_fisher_fallback": 5,
+    "min_wheel_grade_fallback": "C",
+    "friday_cutoff_et": "15:00",
+    "continuity_bonus": 0.005
+  },
+  "alerts": {
+    "console": true,
+    "toast": true,
+    "email": false,
+    "email_address": "",
+    "sms_gateway": "",
+    "urgent_keywords": [
+      "ROLL",
+      "EARNINGS",
+      "DEEP_ITM",
+      "TOKEN_EXPIRED"
+    ]
+  },
+  "auto_execute": {
+    "btc_profit_target": true,
+    "reinvest_freed": true,
+    "cc_after_assignment": true,
+    "scale_contracts": true,
+    "roll_delta_breach": false,
+    "new_entries": false
+  },
+  "dry_run": false,
+  "log_level": "INFO",
+  "cc_strategy": {
+    "_comment": "Controls how the bot selects CC strikes after assignment",
+    "otm_buffer": 1.05,
+    "dte_min": 28,
+    "dte_max": 75,
+    "prioritize": "balanced",
+    "min_premium": 0.15,
+    "_prioritize_options": {
+      "premium": "Closest strike above cost basis \u2014 max credit, less upside",
+      "balanced": "~4% OTM from current price \u2014 moderate premium + upside",
+      "upside": "~7% OTM from current price \u2014 lower premium, more upside room"
+    }
+  },
+  "position_sizing": {
+    "_comment": "Tiered position sizing rules matched by NAV bracket. Edit to customize.",
+    "tiers": [
+      {
+        "nav_max": 10000,
+        "per_position_pct": 0.25,
+        "per_ticker_pct": 0.3,
+        "sector_max_pct": 0.6
+      },
+      {
+        "nav_max": 25000,
+        "per_position_pct": 0.15,
+        "per_ticker_pct": 0.2,
+        "sector_max_pct": 0.5
+      },
+      {
+        "nav_max": 50000,
+        "per_position_pct": 0.1,
+        "per_ticker_pct": 0.15,
+        "sector_max_pct": 0.4
+      },
+      {
+        "nav_max": 100000,
+        "per_position_pct": 0.08,
+        "per_ticker_pct": 0.12,
+        "sector_max_pct": 0.3
+      },
+      {
+        "nav_max": 9999999,
+        "per_position_pct": 0.05,
+        "per_ticker_pct": 0.08,
+        "sector_max_pct": 0.25
+      }
+    ]
+  },
+  "sector_map": {
+    "JPM": "Finance",
+    "BAC": "Finance",
+    "USB": "Finance",
+    "WFC": "Finance",
+    "C": "Finance",
+    "GS": "Finance",
+    "PFE": "Healthcare",
+    "JNJ": "Healthcare",
+    "MRK": "Healthcare",
+    "ABBV": "Healthcare",
+    "BMY": "Healthcare",
+    "AMGN": "Healthcare",
+    "CSCO": "Technology",
+    "IBM": "Technology",
+    "QCOM": "Technology",
+    "TXN": "Technology",
+    "INTC": "Technology",
+    "HPQ": "Technology",
+    "KO": "Consumer",
+    "PEP": "Consumer",
+    "PG": "Consumer",
+    "WMT": "Consumer",
+    "TGT": "Consumer",
+    "HD": "Consumer",
+    "LOW": "Consumer",
+    "MCD": "Consumer",
+    "MO": "Consumer",
+    "PM": "Consumer",
+    "XOM": "Energy",
+    "CVX": "Energy",
+    "OXY": "Energy",
+    "DUK": "Utilities",
+    "SO": "Utilities",
+    "NEE": "Utilities",
+    "D": "Utilities",
+    "VZ": "Telecom",
+    "T": "Telecom",
+    "NOK": "Telecom",
+    "SOFI": "Speculative",
+    "SOUN": "Speculative",
+    "DOCS": "Speculative",
+    "CCL": "Consumer",
+    "F": "Consumer",
+    "O": "RealEstate",
+    "OBTC": "Speculative",
+    "YOU": "Speculative"
+  },
+  "run_mode": "dry_run",
+  "_run_mode_comment": "Options: dry_run (log only), semi (auto-exit only), full (auto-exit + queued entries)"
+}

@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+venv/
+.venv/
+env/
+
+# User data — never commit
+data/config.json
+data/server.log
+data/trade_log.json
+data/memory.json
+data/wheel_state.json
+data/*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Environment
+.env
+.env.local
+
+# Session / dev artifacts
+SESSION_SUMMARY.md
+*.zip
