@@ -358,10 +358,6 @@ def market_quote(ticker):
                     chg_pct = round((price - float(prev_cls)) / float(prev_cls) * 100, 2)
                 except Exception:
                     chg_pct = None
-            logger.warning(f"market/quote/{ticker} HTTP {resp.status_code}")
-            # Fall through to yfinance fallback below
-        else:
-            # E*Trade returned 200 but price still None — fall through to yfinance
             if price is not None:
                 return jsonify({
                     "ticker":     ticker,
@@ -372,6 +368,8 @@ def market_quote(ticker):
                     "after_hours": not bool(last_trade and float(last_trade or 0) > 0),
                 })
             logger.warning(f"market/quote/{ticker}: E*Trade returned no price — trying yfinance")
+        else:
+            logger.warning(f"market/quote/{ticker} HTTP {resp.status_code} — trying yfinance")
     except Exception as e:
         logger.warning(f"market/quote/{ticker} E*Trade error: {e} — trying yfinance")
 
