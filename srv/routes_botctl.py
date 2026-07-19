@@ -205,16 +205,33 @@ def log_export():
         return _Resp(f"Log export error: {e}\n", mimetype="text/plain")
 
 
+_CFG_EXAMPLE_PATH = os.path.join(_BASE_DIR, "data", "config.example.json")
+
+
+def _load_or_init_config() -> dict:
+    """Load config.json, creating it from config.example.json if missing."""
+    if not os.path.exists(_CFG_PATH):
+        os.makedirs(os.path.dirname(_CFG_PATH), exist_ok=True)
+        try:
+            with open(_CFG_EXAMPLE_PATH) as f:
+                cfg = json.load(f)
+        except Exception:
+            cfg = {}
+        cfg.setdefault("run_mode", "dry_run")
+        with open(_CFG_PATH, "w") as f:
+            json.dump(cfg, f, indent=2)
+        logger.info(f"Created data/config.json from config.example.json")
+    with open(_CFG_PATH) as f:
+        return json.load(f)
+
+
 @app.route("/bot/mode", methods=["GET"])
 def get_bot_mode():
     """Return current run_mode from config.json."""
     try:
-        with open(_CFG_PATH) as f:
-            cfg = json.load(f)
+        cfg = _load_or_init_config()
         return jsonify({"mode": cfg.get("run_mode", "dry_run")})
     except Exception as e:
-        # Config unreadable — report dry_run (safe default) but surface the
-        # error so the UI pill isn't silently wrong about the actual mode.
         logger.error(f"get_bot_mode: config read failed: {e}")
         return jsonify({"mode": "dry_run", "error": str(e)})
 
@@ -227,8 +244,7 @@ def set_bot_mode():
     if mode not in ("dry_run", "semi", "full"):
         return jsonify({"error": f"invalid mode '{mode}' — must be dry_run, semi, or full"}), 400
     try:
-        with open(_CFG_PATH) as f:
-            cfg = json.load(f)
+        cfg = _load_or_init_config()
         old_mode = cfg.get("run_mode", "dry_run")
         cfg["run_mode"] = mode
         with open(_CFG_PATH, "w") as f:
