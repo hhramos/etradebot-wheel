@@ -1062,10 +1062,42 @@ function applyTier(){
 
 function onGreeksClick(){
   if((TIER_RANK[window.TIER]||0) >= TIER_RANK.pro){
-    window.open('greeks.html', '_blank');
+    window.open('greeks.html', 'etradebot_greeks');
   } else {
     document.getElementById('upsell-pro').classList.add('show');
   }
+}
+
+function openGreeksFor(p){
+  if((TIER_RANK[window.TIER]||0) < TIER_RANK.pro){
+    document.getElementById('upsell-pro').classList.add('show');
+    return;
+  }
+  const tab = window.open('greeks.html', 'etradebot_greeks');
+  const payload = {
+    ticker:  p.ticker,
+    type:    p.type === 'CSP' ? 'put' : 'call',
+    dir:     'short',
+    strike:  p.strike,
+    iv:      p.iv || 30,
+    ivEst:   !p.iv,
+    entry:   p.cost,
+    qty:     p.contracts,
+    S:       p.current || p.strike,
+    expiry:  p.expiry,
+  };
+  // Retry postMessage until greeks tab acknowledges or 6s timeout
+  let done = false;
+  const onAck = (ev) => { if (ev.data && ev.data.type === 'greeks_ack') { done = true; window.removeEventListener('message', onAck); } };
+  window.addEventListener('message', onAck);
+  let attempts = 0;
+  const send = () => {
+    if (done) return;
+    tab.postMessage({ type: 'greeks_load', payload }, '*');
+    attempts++;
+    if (attempts < 20) setTimeout(send, 300);
+  };
+  setTimeout(send, 400);
 }
 
 function onFuturesClick(){
@@ -1666,6 +1698,8 @@ function loadPositions(){
               ?`<button class="act-btn-sec sec-roll" onclick="executeAction('${p.ticker}','ROLL',${JSON.stringify(p).replace(/"/g,"'")})">Roll</button>`:''
             }${p.action==='ROLL'
               ?`<button class="act-btn-sec sec-close" onclick="executeAction('${p.ticker}','BTC_READY',${JSON.stringify(p).replace(/"/g,"'")})">Close</button>`:''
+            }${(p.type==='CSP'||p.type==='CC')&&(TIER_RANK[window.TIER]||0)>=TIER_RANK.pro
+              ?`<button class="act-btn-sec" title="Open Greeks analyzer" onclick="openGreeksFor(${JSON.stringify(p).replace(/"/g,"'")})">Δ</button>`:''
             }
           </div>
         </td>
