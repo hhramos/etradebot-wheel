@@ -3,6 +3,32 @@ from srv.core import (
     _session, app, jsonify, logger, request,
 )
 
+import threading
+
+_FUTURES_URL = "http://127.0.0.1:5001"
+
+
+def _push_to_futures():
+    """Push wheel credentials to the futures server in the background (best-effort)."""
+    import urllib.request, json as _json, urllib.error
+    payload = _json.dumps({
+        "consumer_key":        _session.get("consumer_key", ""),
+        "consumer_secret":     _session.get("consumer_secret", ""),
+        "access_token":        _session.get("access_token", ""),
+        "access_token_secret": _session.get("access_token_secret", ""),
+    }).encode()
+    req = urllib.request.Request(
+        f"{_FUTURES_URL}/auth/from_wheel",
+        data=payload,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        urllib.request.urlopen(req, timeout=2)
+        logger.info("Credentials pushed to futures server")
+    except urllib.error.URLError:
+        pass  # futures server not running — silently skip
+
 
 @app.route("/auth/init", methods=["POST"])
 def auth_init():
@@ -81,6 +107,9 @@ def auth_token():
             accts = [accts]
         if accts:
             _session["account_id"] = accts[0].get("accountIdKey") or accts[0].get("accountId")
+
+        # Push credentials to futures server if it's running (best-effort, non-blocking)
+        threading.Thread(target=_push_to_futures, daemon=True).start()
 
         return jsonify({
             "success":    True,
