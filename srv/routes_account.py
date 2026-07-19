@@ -159,6 +159,7 @@ def positions():
                     "contracts":    contracts,
                     "cost":         round(cost, 2),
                     "current":      round(current, 2),
+                    "iv":           round(float(sc.get("iv_pct", 0) or 0), 1),
                     "pnl":          round(pnl, 2),
                     "pnl_pct":      round(pnl_pct, 1),
                     "action":           _classify_position(
