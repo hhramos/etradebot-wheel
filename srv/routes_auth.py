@@ -16,6 +16,7 @@ def _push_to_futures():
         "consumer_secret":     _session.get("consumer_secret", ""),
         "access_token":        _session.get("access_token", ""),
         "access_token_secret": _session.get("access_token_secret", ""),
+        "environment":         _session.get("etrade_env", "live"),
     }).encode()
     req = urllib.request.Request(
         f"{_FUTURES_URL}/auth/from_wheel",
