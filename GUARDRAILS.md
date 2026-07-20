@@ -169,6 +169,9 @@ It answers in plain English using your real account data. It runs locally on you
 
 **The AI cannot override the guardrails.** If the rules say no earnings within 7 days, the bot will not enter that trade no matter what the AI says. The rules always win.
 
+![AI Advisor chat](screenshots/Wheel%20AI%20Advisor%20chat.png)
+
+
 ---
 
 ## Summary — What the Bot Does While You're Not Watching
