@@ -40,6 +40,8 @@ The bot tracks every position through a series of stages. Here is what each one 
 
 The bot saves this state to a file every time something changes, so it remembers exactly where things stand even if you restart your computer.
 
+![Position monitor — open CSP](screenshots/Wheel%20Position%20monitor%20open%20CSP.png)
+
 ---
 
 ## The Screener — How the Bot Finds Good Stocks
@@ -121,6 +123,8 @@ These are the hard rules. The AI advisor cannot override them. They are baked in
 | **Delta breach** | If the stock drops and the delta hits 1.5× what it was at entry, the bot flags it for a roll. The position hasn't failed — you just need to adjust. |
 | **14 DTE at a loss** | If a position is still losing money with only 14 days left, the bot flags it to roll forward. You take a small loss on the old option and sell a new one further out to recover. |
 
+![Trade suggestion card](screenshots/Wheel%20Trade%20suggestion%20card.png)
+
 ### Roll Rules — How the Bot Handles Trouble
 
 Rolling means closing the current option and opening a new one further out in time, usually for a net credit (meaning they pay you more for the new one than it costs to close the old one).
@@ -140,6 +144,8 @@ The bot does **not** roll for the sake of it. If a position can be closed at a p
 | **Dry Run** | Nothing — the bot watches and writes down what it would do | Everything (but nothing actually happens) |
 | **Semi** | Closes winning trades at 50% profit automatically | All new entries |
 | **Full** | Closes winners, queues new entries based on screener | You can review and cancel anything |
+
+![Mode selector — Dry / Semi / Full](screenshots/Wheel%20Mode%20selector%20dry.semi.full.png)
 
 **Start in Dry Run.** Watch the bot work for a week or two. See what it recommends and why. When you trust it, switch to Semi. When you're comfortable with Semi, switch to Full if you want.
 

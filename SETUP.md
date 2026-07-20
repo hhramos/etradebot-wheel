@@ -185,12 +185,20 @@ Then open your browser and go to: **http://127.0.0.1:5000/ui/index.html**
 ## Step 7 — Log In to E\*Trade
 
 1. The dashboard opens with a login screen
+
+![Login screen before auth](screenshots/Wheel%20Login%20Screen%20Before%20Auth.png)
+
 2. Paste your Consumer Key and Consumer Secret
 3. Click **Confirm**
 4. Click **Launch E\*Trade login** — your browser opens E\*Trade's website
+
+![E*Trade OAuth page](screenshots/Wheel%20Etrade%20OAuth%20Page.png)
+
 5. Log in to E\*Trade and click Authorize
 6. E\*Trade shows you a short **verifier code** (5–6 characters)
 7. Copy that code, paste it back in the bot, and click **Connect**
+
+![Verifier code entry](screenshots/Wheel%20Verifier%20code%20entry.png)
 
 You're in. The dashboard now shows your real account balance and positions.
 
@@ -209,6 +217,8 @@ Before letting the bot do anything, take 5 minutes to do this:
 - [ ] Look at the 3-year projection page — does your account balance appear correctly?
 
 If all of that works, you're good to go.
+
+![Dashboard after first login](screenshots/Wheel%20Dashboard%20after%20first%20login.png)
 
 ---
 
