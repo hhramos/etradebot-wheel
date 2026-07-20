@@ -89,6 +89,9 @@ Before a trade is ever placed, the bot removes any stock that:
 - Would require more than 8% of your total account as collateral for one position
 - Would push your total deployed capital above 80% of your account
 
+![Screener results](screenshots/Wheel%20Screener%20results.png)
+
+
 ---
 
 ## The Guardrails — What the Bot Will Never Do
