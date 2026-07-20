@@ -6,6 +6,28 @@ Your E\*Trade credentials never leave your computer. The bot runs entirely on yo
 
 ---
 
+## Why E\*Trade? Why not a platform with a better API?
+
+This bot could have been built on platforms with more powerful APIs — ones that stay connected around the clock, remember your session forever, and let a bot run completely on its own without any check-in from you.
+
+That was a deliberate choice not to do that.
+
+The thing that looks like E\*Trade's biggest weakness — the fact that your session expires every day and you have to log back in — is actually its most important safety feature. **It means the bot physically cannot do anything without you showing up first.**
+
+Every single day, you have to open the app, type in your credentials, and complete the login. That 20-second routine is not an annoyance. It is your daily confirmation that you are still in control. The bot cannot wake up at 3 AM and start placing orders. It cannot keep running after you've decided to stop. It cannot do anything you haven't personally authorized that morning.
+
+Other platforms let you create API keys that never expire, with permissions wide enough to trade, transfer, and withdraw — all without you touching the keyboard. That is a lot of trust to place in any piece of software, including this one. One bug, one bad signal, one edge case the model never saw — and a bot with persistent credentials can cause real damage before you notice.
+
+With E\*Trade's daily expiry, the worst case is one day's worth of activity. You will know about it the next morning when you log in.
+
+**The re-authentication is not a limitation. It is a circuit breaker built into the platform itself.**
+
+By nature this project takes a fiscally conservative approach. The wheel strategy is already a conservative, income-focused strategy — slow, deliberate, rule-based. The platform matches the philosophy. Once you've been using this for a few weeks and you understand what the bot is doing and why, you'll find you only need to log in once or twice a week anyway. The positions take care of themselves between sessions. The daily login becomes a quick gut-check, not a chore.
+
+If you ever feel like the bot is doing too much or moving too fast, just don't log in. The bot stops. You stay in control.
+
+---
+
 ## How your credentials are handled
 
 | What | How it's stored | When it's cleared |

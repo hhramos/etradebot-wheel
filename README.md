@@ -5,6 +5,24 @@ No cloud services. No telemetry. Credentials are held in memory only and never w
 
 ---
 
+## Why E\*Trade? Why re-authenticate every day?
+
+This bot could have been built on platforms with more powerful APIs — ones that stay connected forever and let a bot run completely on its own.
+
+That was a choice not to do.
+
+The thing that looks like E\*Trade's biggest weakness — your session expires every day and you have to log back in — is actually its most important safety feature. **The bot cannot do anything without you showing up first.**
+
+Every morning, you open the app and log in. That 20-second routine is your daily confirmation that you are still in control. The bot cannot wake up at 3 AM and start placing orders. It cannot keep running after you've decided to stop. One bug, one bad signal, one edge case the model never saw — and a bot with always-on credentials can cause real damage before you notice. With E\*Trade, the worst case is one day's activity.
+
+Other platforms let you create API keys that never expire, with permissions wide enough to trade, transfer, and withdraw without you ever touching the keyboard. That is a lot of trust to place in any piece of software, including this one.
+
+**The daily re-authentication is not a bug. It is a circuit breaker built into the platform itself.** If you ever feel like the bot is doing too much — just don't log in. It stops. You stay in control.
+
+And in practice, once you have confidence in what the bot is doing, you'll find you only log in once or twice a week anyway. The wheel strategy is slow by design — monthly contracts, 2–5 trades a week. The positions take care of themselves between sessions.
+
+---
+
 ## Why does it run on your computer instead of the cloud?
 
 **It's free.** AI services like ChatGPT charge you every time they answer a question. A bot that checks your positions a dozen times a day and runs a screener might make 50–100 of those calls daily — that adds up to $60–200 a month, coming straight out of the money you're trying to earn. ETradeBot uses [Ollama](https://ollama.com), which runs on your own computer. Cost: **$0/month, forever.** A regular laptop with 16GB of RAM handles it just fine.
