@@ -5,6 +5,33 @@ No cloud services. No telemetry. Credentials are held in memory only and never w
 
 ---
 
+## How it works (plain English)
+
+Think of ETradeBot like a fishing net you set up in the morning.
+
+The old way: you sit by the river all day holding a fishing pole, watching the water, waiting for a bite. If you look away, you miss it. That's trading without automation — staring at screens for hours hoping to catch the right moment.
+
+The ETradeBot way: you spend 10–15 minutes in the morning setting your net, then walk away. The bot watches the river for you. It knows the rules you taught it — which fish to catch, when to pull the net, when to leave it alone.
+
+**What a typical day looks like:**
+
+- **Morning (10–15 min):** Open the app. The bot already screened 40 stocks overnight and ranked them. It shows you three good ones to sell puts on — strike price, cash needed, how much you'd earn — all pre-calculated. You click approve or skip.
+- **During the day (0 min):** The bot checks your positions every 30 minutes. If a trade hits 50% profit, it closes it. If something needs attention, it flags it. You don't need to watch.
+- **Evening (5 min, optional):** Ask the Wheel Advisor "what happened today?" in plain English. It tells you what it did and why.
+- **Once a week (10–15 min):** Run the backtest to see how your strategy performed. Adjust if needed.
+
+The wheel strategy is perfect for this because it's slow by design. You're selling monthly options — 28–50 day contracts — not day trading. Two to five trades a week, not twenty a day. Each trade is pre-calculated, and you just say yes or no.
+
+**The three modes control how much the bot does on its own:**
+
+| Mode | What it does |
+|------|-------------|
+| **Dry run** | Watches and suggests, but does nothing — training wheels |
+| **Semi** | Closes winning trades automatically, asks before opening new ones |
+| **Full** | Handles everything within your rules |
+
+---
+
 ## Features
 
 - Live positions with wheel action recommendations (sell CSP, roll, assign, sell CC)
