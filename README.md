@@ -5,6 +5,34 @@ No cloud services. No telemetry. Credentials are held in memory only and never w
 
 ---
 
+## Why E\*Trade? Why re-authenticate every day?
+
+This bot could have been built on platforms with more powerful APIs — ones that stay connected forever and let a bot run completely on its own.
+
+That was a choice not to do.
+
+The thing that looks like E\*Trade's biggest weakness — your session expires every day and you have to log back in — is actually its most important safety feature. **The bot cannot do anything without you showing up first.**
+
+Every morning, you open the app and log in. That 20-second routine is your daily confirmation that you are still in control. The bot cannot wake up at 3 AM and start placing orders. It cannot keep running after you've decided to stop. One bug, one bad signal, one edge case the model never saw — and a bot with always-on credentials can cause real damage before you notice. With E\*Trade, the worst case is one day's activity.
+
+Other platforms let you create API keys that never expire, with permissions wide enough to trade, transfer, and withdraw without you ever touching the keyboard. That is a lot of trust to place in any piece of software, including this one.
+
+**The daily re-authentication is not a bug. It is a circuit breaker built into the platform itself.** If you ever feel like the bot is doing too much — just don't log in. It stops. You stay in control.
+
+And in practice, once you have confidence in what the bot is doing, you'll find you only log in once or twice a week anyway. The wheel strategy is slow by design — monthly contracts, 2–5 trades a week. The positions take care of themselves between sessions.
+
+---
+
+## Why does it run on your computer instead of the cloud?
+
+**It's free.** AI services like ChatGPT charge you every time they answer a question. A bot that checks your positions a dozen times a day and runs a screener might make 50–100 of those calls daily — that adds up to $60–200 a month, coming straight out of the money you're trying to earn. ETradeBot uses [Ollama](https://ollama.com), which runs on your own computer. Cost: **$0/month, forever.** A regular laptop with 16GB of RAM handles it just fine.
+
+**Your finances stay in your house.** When you send your account balance, positions, and trades to a cloud AI, that information sits on a server you don't control — possibly used to train models, possibly exposed in a breach. With ETradeBot, none of that leaves your laptop. Your account, your strategy, your history — all of it stays in your living room. Think of the difference between counting your money quietly at the kitchen table versus shouting the numbers in a crowded mall.
+
+**It can't be taken away.** Cloud services raise prices, change their rules, or go down for maintenance right when you need them. Ollama doesn't have a billing department. It doesn't have terms of service. It doesn't go offline at 9:31 AM on a Monday. It just runs.
+
+---
+
 ## How it works (plain English)
 
 Think of ETradeBot like a fishing net you set up in the morning.
@@ -235,3 +263,39 @@ The wheel pushes credentials to the futures server when you click the Futures bu
 
 **macOS — `start.sh` won't open**  
 Run `chmod +x start.sh` once, then double-click or run `./start.sh`.
+
+---
+
+## Frequently asked questions
+
+**Is this safe? Can it drain my account?**  
+No. The bot defaults to `dry_run` mode — it watches your positions and makes suggestions but places zero orders. Even in `semi` or `full` mode, it can only place option orders. It cannot withdraw money, transfer funds, or touch your cash. See [SECURITY.md](SECURITY.md) for the full breakdown.
+
+**Do I need coding experience?**  
+You need to be comfortable installing Python and running a command in a terminal. You do not need to read or write any code to use it.
+
+**Does it work on Mac and Linux?**  
+Yes. Run `start.sh` or `python3 server.py`. Everything works the same as Windows.
+
+**Do I need Ollama / the AI advisor?**  
+No. The screener, position monitor, order panel, and projection page all work without it. Ollama is only needed for the AI chat and trade thesis features.
+
+**What Ollama model should I use?**  
+`qwen2.5` for speed, `phi4` for the best analysis. Both run fine on a laptop with 16GB RAM.
+
+**Will E\*Trade ban me for using a bot?**  
+No. E\*Trade provides the developer API specifically so you can build tools like this. The bot uses their official OAuth flow — the same one any approved third-party app uses.
+
+**Do I need a special E\*Trade account?**  
+A standard E\*Trade brokerage account with options trading enabled. Apply for API access at [developer.etrade.com](https://developer.etrade.com) — it's free.
+
+**Why do I have to log in again every morning?**  
+E\*Trade OAuth tokens expire daily. This is an E\*Trade policy, not something the bot controls. `start.bat` / `start.sh` includes a one-click re-auth flow — it takes about 20 seconds.
+
+**What's the difference between the three modes?**  
+`dry_run` — watches and suggests, places no orders (start here).  
+`semi` — automatically closes winning trades at 50% profit, asks before opening new ones.  
+`full` — handles exits and queues new entries, all within your configured rules.
+
+**What is the Pro / Pro+ tier?**  
+The free version covers the full wheel strategy — screener, position monitor, advisor, projection. Pro adds the Greeks analyzer. Pro+ adds the Micro Futures ML pipeline (MES, MNQ, MYM, M2K). See the Tiers section above.
