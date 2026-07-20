@@ -167,8 +167,6 @@ The advisor is optional — all other features work without it.
 
 ![AI Advisor chat](screenshots/Wheel%20AI%20Advisor%20chat.png)
 
-![3-year projection page](screenshots/Wheel%20projection%20page.png)
-
 ---
 
 ## File Layout
