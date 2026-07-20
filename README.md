@@ -303,11 +303,6 @@ E\*Trade OAuth tokens expire daily. This is an E\*Trade policy, not something th
 `semi` — automatically closes winning trades at 50% profit, asks before opening new ones.  
 `full` — handles exits and queues new entries, all within your configured rules.
 
-**What's the difference between the three modes?**  
-`dry_run` — watches and suggests, places no orders (start here).  
-`semi` — automatically closes winning trades at 50% profit, asks before opening new ones.  
-`full` — handles exits and queues new entries, all within your configured rules.
-
 **What is the Pro / Pro+ tier?**  
 The free version covers the full wheel strategy — screener, position monitor, advisor, projection. Pro adds the Greeks analyzer. Pro+ adds the Micro Futures ML pipeline (MES, MNQ, MYM, M2K). See the Tiers section above.
 
