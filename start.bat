@@ -10,6 +10,10 @@ echo.
 
 cd /d "%~dp0"
 
+:: ── Detect futures plugin ─────────────────────────────────────────────────
+set FUTURES_PRESENT=0
+if exist "plugins\futures\etrade_app.py" set FUTURES_PRESENT=1
+
 :: ── Find Python ──────────────────────────────────────────────────────────
 set PYTHON=
 py --version >nul 2>&1
@@ -82,6 +86,14 @@ echo.
 echo  Installing/upgrading: flask flask-cors pyetrade yfinance pandas numpy requests requests-oauthlib pytest
 echo.
 %PYTHON% -m pip install --upgrade flask flask-cors pyetrade yfinance pandas numpy requests requests-oauthlib pytest --quiet
+
+:: Install futures dependencies if plugin is present
+if "!FUTURES_PRESENT!"=="1" (
+    if exist "plugins\futures\requirements.txt" (
+        echo  Installing futures plugin dependencies...
+        %PYTHON% -m pip install --upgrade -r plugins\futures\requirements.txt --quiet
+    )
+)
 if errorlevel 1 (
     echo.
     echo  WARNING: Some packages may not have installed correctly.
@@ -179,10 +191,24 @@ for /f "tokens=5" %%a in ('netstat -aon ^| findstr ":5000 " 2^>nul') do (
     taskkill /f /pid %%a >nul 2>&1
 )
 
-echo  Starting server...
+:: Kill anything on port 5001 if futures plugin is present
+if "!FUTURES_PRESENT!"=="1" (
+    echo  Checking port 5001...
+    for /f "tokens=5" %%a in ('netstat -aon ^| findstr ":5001 " 2^>nul') do (
+        taskkill /f /pid %%a >nul 2>&1
+    )
+)
+
+echo  Starting Wheel server on port 5000...
 start /B %PYTHON% server.py
 
-:: Wait for Flask to be ready
+:: Start futures server in its own window if plugin is present
+if "!FUTURES_PRESENT!"=="1" (
+    echo  Futures plugin detected — launching Micro Futures Dashboard on port 5001...
+    start "Micro Futures Dashboard" cmd /k "cd /d "%~dp0plugins\futures" && %PYTHON% etrade_app.py"
+)
+
+:: Wait for Flask servers to be ready
 timeout /t 3 /nobreak >nul
 
 :: Open browser
@@ -191,7 +217,10 @@ start http://127.0.0.1:5000/ui/index.html
 
 echo.
 echo  ============================================
-echo   Server running at http://127.0.0.1:5000
+echo   Wheel Strategy    http://127.0.0.1:5000
+if "!FUTURES_PRESENT!"=="1" (
+echo   Micro Futures     http://127.0.0.1:5001
+)
 echo   Press Ctrl+C or close this window to stop
 echo  ============================================
 echo.

@@ -121,6 +121,15 @@ def auth_token():
         return jsonify({"success": False, "error": str(e), "hint": "Verifier codes expire quickly — try clicking Launch E-Trade login again for a fresh code"}), 502
 
 
+@app.route("/auth/push_to_futures", methods=["POST"])
+def push_to_futures_now():
+    """On-demand synchronous credential push to futures server — called when user clicks Futures button."""
+    if not _session.get("connected"):
+        return jsonify({"success": False, "error": "Not connected to E*Trade"}), 400
+    _push_to_futures()   # synchronous so credentials arrive before the browser opens /dashboard
+    return jsonify({"success": True})
+
+
 @app.route("/auth/status", methods=["GET"])
 def auth_status():
     return jsonify({
