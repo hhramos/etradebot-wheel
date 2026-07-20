@@ -54,6 +54,9 @@
 - "over 5%" badge on positions exceeding NAV cap
 - Filters: sector, min Fisher, min wheel grade, hide >5% positions
 
+![Screener results](screenshots/Wheel%20Screener%20results.png)
+
+
 ---
 
 ## Order Management
