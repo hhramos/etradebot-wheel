@@ -119,7 +119,7 @@
 
 ## Projection & Backtest
 
-### 3-Year Projection
+###  Projection
 - Three scenarios: A (base, flat capital), B (reinvest income), C (reinvest + margin)
 - Adjustable inputs: starting capital, monthly yield, margin level, margin APR, tax drag, bad months per year
 - Portfolio value chart (36 months, Chart.js)
@@ -137,6 +137,9 @@
 - HTML report matching ETradeBot dark UI
 - `--save-state` flag: exports `wheel_state.json` so live bot picks up where backtest ended
 - Ollama backtest analysis: rich context (individual cycle records, per-ticker stats) fed to local AI
+
+![3-year projection page](screenshots/Wheel%20projection%20page.png)
+
 
 ---
 
