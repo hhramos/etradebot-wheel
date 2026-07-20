@@ -126,8 +126,6 @@ These are the hard rules. The AI advisor cannot override them. They are baked in
 | **Delta breach** | If the stock drops and the delta hits 1.5× what it was at entry, the bot flags it for a roll. The position hasn't failed — you just need to adjust. |
 | **14 DTE at a loss** | If a position is still losing money with only 14 days left, the bot flags it to roll forward. You take a small loss on the old option and sell a new one further out to recover. |
 
-![Trade suggestion card](screenshots/Wheel%20Trade%20suggestion%20card.png)
-
 ### Roll Rules — How the Bot Handles Trouble
 
 Rolling means closing the current option and opening a new one further out in time, usually for a net credit (meaning they pay you more for the new one than it costs to close the old one).
