@@ -5,6 +5,16 @@ No cloud services. No telemetry. Credentials are held in memory only and never w
 
 ---
 
+## Why does it run on your computer instead of the cloud?
+
+**It's free.** AI services like ChatGPT charge you every time they answer a question. A bot that checks your positions a dozen times a day and runs a screener might make 50–100 of those calls daily — that adds up to $60–200 a month, coming straight out of the money you're trying to earn. ETradeBot uses [Ollama](https://ollama.com), which runs on your own computer. Cost: **$0/month, forever.** A regular laptop with 16GB of RAM handles it just fine.
+
+**Your finances stay in your house.** When you send your account balance, positions, and trades to a cloud AI, that information sits on a server you don't control — possibly used to train models, possibly exposed in a breach. With ETradeBot, none of that leaves your laptop. Your account, your strategy, your history — all of it stays in your living room. Think of the difference between counting your money quietly at the kitchen table versus shouting the numbers in a crowded mall.
+
+**It can't be taken away.** Cloud services raise prices, change their rules, or go down for maintenance right when you need them. Ollama doesn't have a billing department. It doesn't have terms of service. It doesn't go offline at 9:31 AM on a Monday. It just runs.
+
+---
+
 ## How it works (plain English)
 
 Think of ETradeBot like a fishing net you set up in the morning.
