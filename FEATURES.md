@@ -105,6 +105,9 @@
 - 6 quick-question buttons (today's actions, this week, this month, why these actions, explain opportunity, alternative actions)
 - Entry timing rules: IV Rank thresholds, VIX regime, SMA trend, post-earnings window baked into every recommendation
 
+![AI Advisor chat](screenshots/Wheel%20AI%20Advisor%20chat.png)
+
+
 ---
 
 ## Positions Table
