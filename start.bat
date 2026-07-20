@@ -202,12 +202,10 @@ if "!FUTURES_PRESENT!"=="1" (
 echo  Starting Wheel server on port 5000...
 start /B %PYTHON% server.py
 
-:: Start futures server if plugin is present
+:: Start futures server in its own window if plugin is present
 if "!FUTURES_PRESENT!"=="1" (
-    echo  Futures plugin detected — starting Micro Futures Dashboard on port 5001...
-    pushd plugins\futures
-    start /B %PYTHON% etrade_app.py
-    popd
+    echo  Futures plugin detected — launching Micro Futures Dashboard on port 5001...
+    start "Micro Futures Dashboard" cmd /k "cd /d "%~dp0plugins\futures" && %PYTHON% etrade_app.py"
 )
 
 :: Wait for Flask servers to be ready
