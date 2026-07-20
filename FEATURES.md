@@ -124,6 +124,9 @@
 ### Summary Bar
 - Open positions count, P&L today, total collateral, pending actions count, open orders count
 
+![Position monitor — open CSP](screenshots/Wheel%20Position%20monitor%20open%20CSP.png)
+
+
 ---
 
 ## Projection & Backtest
