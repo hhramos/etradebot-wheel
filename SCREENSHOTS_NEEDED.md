@@ -82,27 +82,47 @@ All Wheel screenshots live in `screenshots/` on `main`.
 
 ### Setup (README → Installation)
 
-**G-S1 ⬜ — Greeks tab appearing in Wheel nav**
+**G-S1 ✅ — Greeks tab appearing in Wheel nav**
 *README → Installation — toolbar after `greeks.html` is dropped in, "Pro" tier detected*
+
+![Greeks tab appearing in Wheel nav](screenshots/Greeks%20Greeks%20tab%20appearing%20in%20Wheel%20.png)
 
 ---
 
 ### Features / README
 
-**G-F1 ⬜ — Greeks panel — single position**
+**G-F1 ✅ — Greeks panel — single position**
 *README → What's included — Delta / Gamma / Theta / Vega / Rho for a sample CSP*
 
-**G-F2 ⬜ — P&L heatmap**
+![Greeks panel — single position](screenshots/Greeks%20Greeks%20Panel%20.png)
+
+---
+
+**G-F2 ✅ — P&L heatmap**
 *README → What's included + FAQ — color grid, price vertical, DTE horizontal*
 
-**G-F3 ⬜ — Strategy builder — iron condor**
+![P&L heatmap](screenshots/Greeks%20P%26L%20heatmap.png)
+
+---
+
+**G-F3 ✅ — Strategy builder — iron condor**
 *README → What's included — multi-leg entry form + combined net Greeks*
 
-**G-F4 ⬜ — Theta decay chart**
+![Strategy builder](screenshots/Greeks%20Strategy%20Builder.png)
+
+---
+
+**G-F4 ✅ — Theta decay chart**
 *README → Features — Theta-over-time curve, acceleration in final 21 days*
 
-**G-F5 ⬜ — AI trade thesis output**
+![Theta decay chart](screenshots/Greeks%20Theta%20decay%20chart.png)
+
+---
+
+**G-F5 ✅ — AI trade thesis output**
 *README → Features — plain-English win/kill conditions from Ollama*
+
+![AI trade thesis output](screenshots/Greeks%20AI%20trade%20thesis%20output.png)
 
 ---
 
@@ -152,6 +172,6 @@ All Wheel screenshots live in `screenshots/` on `main`.
 | Product | Captured | Needed | Total |
 |---------|----------|--------|-------|
 | Wheel   | 11 ✅    | 0 ⬜   | 11    |
-| Greeks  | 0 ✅     | 6 ⬜   | 6     |
+| Greeks  | 6 ✅     | 0 ⬜   | 6     |
 | Futures | 0 ✅     | 8 ⬜   | 8     |
-| **All** | **11**   | **14** | **25**|
+| **All** | **17**   | **8**  | **25**|
