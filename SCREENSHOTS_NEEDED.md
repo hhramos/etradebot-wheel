@@ -130,40 +130,100 @@ All Wheel screenshots live in `screenshots/` on `main`.
 
 ### Setup (README → Quick Start / First Run Checklist)
 
-**F-S1 ⬜ — First Run / Setup & Status modal**
+**F-S1 ✅ — First Run / Setup & Status modal**
 *README → First Run Checklist — checklist modal mid-setup, mix of pass/fail/waiting*
 
-**F-S2 ⬜ — "Init DB" primary button state**
+![First Run / Setup & Status modal](screenshots/Futures%20First%20Run%20Setup.png)
+
+---
+
+**F-S2 ✅ — "Init DB" primary button state**
 *README → First Run Checklist — modal before database exists, button reads "Init / Reset DB"*
 
-**F-S3 ⬜ — Dashboard after full setup**
+![Init DB button state](screenshots/Futures%20Init%20DB.png)
+
+---
+
+**F-S3 ✅ — Dashboard after full setup**
 *README → Quick Start — all checklist items green, SANDBOX badge visible*
+
+![Dashboard after full setup](screenshots/Futures%20Complete%20Setup.png)
+
+---
 
 ### Features / README + How It Works
 
-**F-F1 ⬜ — Pipeline Signals section**
+**F-F1 ✅ — Pipeline Signals section**
 *README → How it works — all signal cards after a pipeline run, prediction + regime + GARCH rows*
 
-**F-F2 ⬜ — GARCH signal rows close-up**
-*README → GARCH / How it works — σ, vol regime badge, stop/TP; ideally one "normal" and one "SKIP"*
+![Pipeline Signals section](screenshots/Futures%20Pipeline%20Signals.png)
 
-**F-F3 ⬜ — Trade Card (8-step checklist)**
+---
+
+**F-F2 ✅ — GARCH signal rows close-up**
+*README → GARCH / How it works — σ, vol regime badge, stop/TP*
+
+![GARCH signal rows close-up](screenshots/Futures%20GARCH%20signal%20rows%20close-up.png)
+
+---
+
+**F-F3 ✅ — Trade Card (8-step checklist)**
 *README → Features — scorecard with mix of green/red rows*
 
-**F-F4 ⬜ — Environment switch modal**
+![Trade Card — 8-step checklist](screenshots/Futures%20Trade%20Card%20checklist.png)
+
+---
+
+**F-F4 ✅ — Environment switch modal**
 *README → Security — SANDBOX → LIVE modal with red "REAL MONEY" warning*
+
+![Environment switch modal](screenshots/Futures%20Environmental%20switch%20modal%20.png)
+
+---
 
 **F-F5 ⬜ — Positions table**
 *README → Features — open paper positions, entry price, unrealized P&L, stop price*
 
-**F-F6 ⬜ — AI Advisor sanity check response**
+---
+
+**F-F6 ✅ — AI Advisor sanity check response**
 *README → Features — pre-trade sanity check output including GARCH context line*
 
-**F-F7 ⬜ — Pipeline run in progress**
+![AI Advisor sanity check response](screenshots/Futures%20AI%20Advisor%20sanity%20check%20response.png)
+
+---
+
+**F-F7 ✅ — Pipeline run in progress**
 *README → How it works — the "Running…" spinner state*
 
-**F-F8 ⬜ — Operations panel**
+![Pipeline run in progress](screenshots/Futures%20Pipeline%20run%20in%20progress.png)
+
+---
+
+**F-F8 ✅ — Operations panel**
 *README → Quick Start — Retrain / Preflight / Run Pipeline buttons*
+
+![Operations panel](screenshots/Futures%20Operations%20Panel.png)
+
+---
+
+### Additional / Extra
+
+**F-F9 ✅ — Candlestick charts**
+
+![Charts](screenshots/Futures%20Charts.png)
+
+---
+
+**F-F10 ✅ — Charts magnified**
+
+![Charts magnified](screenshots/Futures%20Charts%20Magnified.png)
+
+---
+
+**F-F11 ✅ — Run Pipeline Now button**
+
+![Run Pipeline Now](screenshots/Futures%20Run%20Pipeline%20Now.png)
 
 ---
 
@@ -173,5 +233,5 @@ All Wheel screenshots live in `screenshots/` on `main`.
 |---------|----------|--------|-------|
 | Wheel   | 11 ✅    | 0 ⬜   | 11    |
 | Greeks  | 6 ✅     | 0 ⬜   | 6     |
-| Futures | 0 ✅     | 8 ⬜   | 8     |
-| **All** | **17**   | **8**  | **25**|
+| Futures | 13 ✅    | 1 ⬜   | 14    |
+| **All** | **30**   | **1**  | **31**|
