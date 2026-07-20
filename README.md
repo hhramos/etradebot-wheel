@@ -297,5 +297,31 @@ E\*Trade OAuth tokens expire daily. This is an E\*Trade policy, not something th
 `semi` — automatically closes winning trades at 50% profit, asks before opening new ones.  
 `full` — handles exits and queues new entries, all within your configured rules.
 
+**What's the difference between the three modes?**  
+`dry_run` — watches and suggests, places no orders (start here).  
+`semi` — automatically closes winning trades at 50% profit, asks before opening new ones.  
+`full` — handles exits and queues new entries, all within your configured rules.
+
 **What is the Pro / Pro+ tier?**  
 The free version covers the full wheel strategy — screener, position monitor, advisor, projection. Pro adds the Greeks analyzer. Pro+ adds the Micro Futures ML pipeline (MES, MNQ, MYM, M2K). See the Tiers section above.
+
+**Something broke — how do I report it?**  
+Open an issue on GitHub using the [bug report template](https://github.com/hhramos/etradebot-wheel/issues/new?template=bug_report.md). The template asks for your OS, Python version, and any error text — that's usually all we need.
+
+**How do I suggest a new feature?**  
+Use the [feature request template](https://github.com/hhramos/etradebot-wheel/issues/new?template=feature_request.md). Plain English is fine — no need to write code or specs.
+
+**The screener returned zero results — what's wrong?**  
+Three common reasons: (1) Markets are closed — the screener needs live data. (2) Your filters are too strict — try relaxing the Fisher Score minimum or the IV threshold. (3) yfinance had a temporary hiccup — wait a minute and try again.
+
+**My E\*Trade login works but the bot says "not connected" — why?**  
+This usually means the verifier code timed out (they expire in about 60 seconds). Click the E\*Trade login button again and complete the flow more quickly. If it keeps happening, try a different browser — some browser extensions can interfere with the redirect.
+
+**Can I use this with a Roth IRA or retirement account?**  
+Yes, as long as your account has options trading enabled. Cash-secured puts and covered calls are generally permitted in IRAs. Check with E\*Trade if you're unsure whether your specific account type allows it.
+
+**How much money do I need to start?**  
+That depends on the stocks you want to trade. A cash-secured put on a $50 stock costs $5,000 in collateral (100 shares × $50). The screener focuses on liquid stocks with affordable prices, but you'll want at least $5,000–$10,000 free cash to have meaningful choices. Paper trade first regardless of account size.
+
+**Will it work if my computer goes to sleep?**  
+The bot stops monitoring when your computer sleeps or the server process stops. It picks up where it left off when you restart it — nothing is lost, but it won't have checked positions while it was off. This is intentional: you stay in control.
