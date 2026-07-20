@@ -1102,7 +1102,9 @@ function openGreeksFor(p){
 
 function onFuturesClick(){
   if((TIER_RANK[window.TIER]||0) >= TIER_RANK.pro_plus){
-    window.open('http://localhost:5001/dashboard', '_blank');
+    fetch('/auth/push_to_futures', {method:'POST'})
+      .catch(()=>{})
+      .finally(()=>{ window.open('http://localhost:5001/dashboard', '_blank'); });
   } else {
     document.getElementById('upsell-proplus').classList.add('show');
   }
