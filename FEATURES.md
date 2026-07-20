@@ -70,6 +70,9 @@
 - GTC BTC order pre-calculated at 50% of opening premium
 - P&L progress bar tracking toward 50% target
 
+![Trade suggestion card](screenshots/Wheel%20Trade%20suggestion%20card.png)
+
+
 ### Custom Entry Card
 - Type any ticker → live lookup → instant order card
 - Fisher score, Wheel grade, IV%, dividend yield shown inline
