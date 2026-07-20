@@ -65,7 +65,7 @@ The wheel strategy is perfect for this because it's slow by design. You're selli
 - Live positions with wheel action recommendations (sell CSP, roll, assign, sell CC)
 - Options screener with ranked candidates
 - Greeks calculator with Ollama AI trade thesis
-- 3-year wheel projection with interactive sliders
+- Wheel projection with interactive sliders
 - Ollama AI advisor for full portfolio analysis
 - Demo mode — full UI works without a brokerage account
 
