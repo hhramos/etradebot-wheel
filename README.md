@@ -245,3 +245,39 @@ The wheel pushes credentials to the futures server when you click the Futures bu
 
 **macOS — `start.sh` won't open**  
 Run `chmod +x start.sh` once, then double-click or run `./start.sh`.
+
+---
+
+## Frequently asked questions
+
+**Is this safe? Can it drain my account?**  
+No. The bot defaults to `dry_run` mode — it watches your positions and makes suggestions but places zero orders. Even in `semi` or `full` mode, it can only place option orders. It cannot withdraw money, transfer funds, or touch your cash. See [SECURITY.md](SECURITY.md) for the full breakdown.
+
+**Do I need coding experience?**  
+You need to be comfortable installing Python and running a command in a terminal. You do not need to read or write any code to use it.
+
+**Does it work on Mac and Linux?**  
+Yes. Run `start.sh` or `python3 server.py`. Everything works the same as Windows.
+
+**Do I need Ollama / the AI advisor?**  
+No. The screener, position monitor, order panel, and projection page all work without it. Ollama is only needed for the AI chat and trade thesis features.
+
+**What Ollama model should I use?**  
+`qwen2.5` for speed, `phi4` for the best analysis. Both run fine on a laptop with 16GB RAM.
+
+**Will E\*Trade ban me for using a bot?**  
+No. E\*Trade provides the developer API specifically so you can build tools like this. The bot uses their official OAuth flow — the same one any approved third-party app uses.
+
+**Do I need a special E\*Trade account?**  
+A standard E\*Trade brokerage account with options trading enabled. Apply for API access at [developer.etrade.com](https://developer.etrade.com) — it's free.
+
+**Why do I have to log in again every morning?**  
+E\*Trade OAuth tokens expire daily. This is an E\*Trade policy, not something the bot controls. `start.bat` / `start.sh` includes a one-click re-auth flow — it takes about 20 seconds.
+
+**What's the difference between the three modes?**  
+`dry_run` — watches and suggests, places no orders (start here).  
+`semi` — automatically closes winning trades at 50% profit, asks before opening new ones.  
+`full` — handles exits and queues new entries, all within your configured rules.
+
+**What is the Pro / Pro+ tier?**  
+The free version covers the full wheel strategy — screener, position monitor, advisor, projection. Pro adds the Greeks analyzer. Pro+ adds the Micro Futures ML pipeline (MES, MNQ, MYM, M2K). See the Tiers section above.
