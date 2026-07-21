@@ -100,7 +100,7 @@ Use `data/config.example.json` as the committed template.
 
 If you find a security vulnerability — especially anything that could expose credentials or allow unintended order placement — please **do not open a public GitHub issue**.
 
-Email instead: *(add your contact email here)*
+Email instead: hybridworksolutions90@gmail.com
 
 Please include:
 - A description of the issue
