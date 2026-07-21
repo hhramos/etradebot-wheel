@@ -54,6 +54,9 @@
 - "over 5%" badge on positions exceeding NAV cap
 - Filters: sector, min Fisher, min wheel grade, hide >5% positions
 
+![Screener results](screenshots/Wheel%20Screener%20results.png)
+
+
 ---
 
 ## Order Management
@@ -66,6 +69,9 @@
 - BTC (buy-to-close) card unlocks after CSP fill confirmation
 - GTC BTC order pre-calculated at 50% of opening premium
 - P&L progress bar tracking toward 50% target
+
+![Trade suggestion card](screenshots/Wheel%20Trade%20suggestion%20card.png)
+
 
 ### Custom Entry Card
 - Type any ticker → live lookup → instant order card
@@ -99,6 +105,9 @@
 - 6 quick-question buttons (today's actions, this week, this month, why these actions, explain opportunity, alternative actions)
 - Entry timing rules: IV Rank thresholds, VIX regime, SMA trend, post-earnings window baked into every recommendation
 
+![AI Advisor chat](screenshots/Wheel%20AI%20Advisor%20chat.png)
+
+
 ---
 
 ## Positions Table
@@ -115,11 +124,14 @@
 ### Summary Bar
 - Open positions count, P&L today, total collateral, pending actions count, open orders count
 
+![Position monitor — open CSP](screenshots/Wheel%20Position%20monitor%20open%20CSP.png)
+
+
 ---
 
 ## Projection & Backtest
 
-### 3-Year Projection
+###  Projection
 - Three scenarios: A (base, flat capital), B (reinvest income), C (reinvest + margin)
 - Adjustable inputs: starting capital, monthly yield, margin level, margin APR, tax drag, bad months per year
 - Portfolio value chart (36 months, Chart.js)
@@ -137,6 +149,9 @@
 - HTML report matching ETradeBot dark UI
 - `--save-state` flag: exports `wheel_state.json` so live bot picks up where backtest ended
 - Ollama backtest analysis: rich context (individual cycle records, per-ticker stats) fed to local AI
+
+![3-year projection page](screenshots/Wheel%20projection%20page.png)
+
 
 ---
 

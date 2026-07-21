@@ -48,7 +48,7 @@ The ETradeBot way: you spend 10–15 minutes in the morning setting your net, th
 - **Evening (5 min, optional):** Ask the Wheel Advisor "what happened today?" in plain English. It tells you what it did and why.
 - **Once a week (10–15 min):** Run the backtest to see how your strategy performed. Adjust if needed.
 
-![Screener results](screenshots/Wheel%20Screener%20results.png)
+![Main dashboard overview](screenshots/Wheel%20Main%20Dashboard%20Overview.png)
 
 The wheel strategy is perfect for this because it's slow by design. You're selling monthly options — 28–50 day contracts — not day trading. Two to five trades a week, not twenty a day. Each trade is pre-calculated, and you just say yes or no.
 
@@ -69,10 +69,11 @@ The wheel strategy is perfect for this because it's slow by design. You're selli
 - Greeks calculator with Ollama AI trade thesis
 - 3-year wheel projection with interactive sliders
 - **Backtest engine** — validate your exit rules against real historical data, with Ollama-powered analysis of the results
+- Wheel projection with interactive sliders
 - Ollama AI advisor for full portfolio analysis
 - Demo mode — full UI works without a brokerage account
 
-![Main dashboard overview](screenshots/Wheel%20Main%20Dashboard%20Overview.png)
+![Screener results](screenshots/Wheel%20Screener%20results.png)
 
 ---
 
@@ -167,8 +168,6 @@ ollama serve
 The advisor is optional — all other features work without it.
 
 ![AI Advisor chat](screenshots/Wheel%20AI%20Advisor%20chat.png)
-
-![3-year projection page](screenshots/Wheel%20projection%20page.png)
 
 ---
 

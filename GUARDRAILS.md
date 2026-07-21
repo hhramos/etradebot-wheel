@@ -89,6 +89,9 @@ Before a trade is ever placed, the bot removes any stock that:
 - Would require more than 8% of your total account as collateral for one position
 - Would push your total deployed capital above 80% of your account
 
+![Screener results](screenshots/Wheel%20Screener%20results.png)
+
+
 ---
 
 ## The Guardrails — What the Bot Will Never Do
@@ -122,8 +125,6 @@ These are the hard rules. The AI advisor cannot override them. They are baked in
 | **21 DTE** | If a position is profitable at 21 days to expiry, the bot closes it. Time decay slows down after this point — you've captured most of what you're going to get. |
 | **Delta breach** | If the stock drops and the delta hits 1.5× what it was at entry, the bot flags it for a roll. The position hasn't failed — you just need to adjust. |
 | **14 DTE at a loss** | If a position is still losing money with only 14 days left, the bot flags it to roll forward. You take a small loss on the old option and sell a new one further out to recover. |
-
-![Trade suggestion card](screenshots/Wheel%20Trade%20suggestion%20card.png)
 
 ### Roll Rules — How the Bot Handles Trouble
 
@@ -165,6 +166,9 @@ You can ask it things like:
 It answers in plain English using your real account data. It runs locally on your computer — nothing leaves your machine, and it costs nothing per conversation.
 
 **The AI cannot override the guardrails.** If the rules say no earnings within 7 days, the bot will not enter that trade no matter what the AI says. The rules always win.
+
+![AI Advisor chat](screenshots/Wheel%20AI%20Advisor%20chat.png)
+
 
 ---
 

@@ -214,7 +214,7 @@ Before letting the bot do anything, take 5 minutes to do this:
 - [ ] Check the positions panel — does it show your real E\*Trade positions correctly?
 - [ ] Run the screener — does it return a list of candidates?
 - [ ] Ask the AI advisor a simple question like "What do you see in my portfolio?" (only if Ollama is running)
-- [ ] Look at the 3-year projection page — does your account balance appear correctly?
+- [ ] Look at the projection page — does your account balance appear correctly?
 
 If all of that works, you're good to go.
 
