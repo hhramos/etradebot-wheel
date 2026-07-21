@@ -69,7 +69,6 @@ The wheel strategy is perfect for this because it's slow by design. You're selli
 - Greeks calculator with Ollama AI trade thesis
 - 3-year wheel projection with interactive sliders
 - **Backtest engine** — validate your exit rules against real historical data, with Ollama-powered analysis of the results
-- Wheel projection with interactive sliders
 - Ollama AI advisor for full portfolio analysis
 - **No account needed** — screener and backtest run on live market data (yfinance) without any E\*Trade login; positions and order flow use realistic demo data
 
