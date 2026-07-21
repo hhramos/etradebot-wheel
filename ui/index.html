@@ -702,6 +702,11 @@ code{font-family:var(--mono);font-size:11px;background:var(--bg3);padding:1px 5p
           <button onclick="clearOAuth()"><i class="ti ti-refresh"></i></button>
         </div>
         <div class="status-row"><div class="sdot" id="oauth-dot" style="background:var(--text3)"></div><span id="oauth-txt">Confirm credentials first</span></div>
+        <!-- Account picker — shown only when multiple sub-accounts exist -->
+        <div id="account-picker" style="display:none;margin-top:14px;">
+          <div style="font-size:12px;color:var(--text3);margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Choose account</div>
+          <div id="account-list" style="display:flex;flex-direction:column;gap:6px;"></div>
+        </div>
       </div>
     </div>
 
@@ -1328,7 +1333,9 @@ function connectEtrade(){
         // Clear expired flag on server AFTER we have a valid new token
         fetch(API+'/auth/reauth_ok',{method:'POST'}).catch(()=>{});
         hideReauthBanner();
-        setConnected(true,d.account_id); setStep(4); document.getElementById('verifier').value='';
+        document.getElementById('verifier').value=''; setStep(4);
+        if(d.accounts && d.accounts.length>1){ showAccountPicker(d.accounts,d.account_id); }
+        else { setConnected(true,d.account_id); }
       } else {
         document.getElementById('oauth-txt').textContent='Failed: '+(d.error||'check verifier');
         document.getElementById('oauth-dot').style.background='var(--red-text)';
@@ -1341,7 +1348,29 @@ function connectEtrade(){
       showCredErr('Could not reach server. Is server.py still running?');
     });
 }
-function clearOAuth(){ setStep(CREDS.isSet()?1:0); document.getElementById('verifier').value=''; document.getElementById('connect-btn').disabled=true; }
+function clearOAuth(){ setStep(CREDS.isSet()?1:0); document.getElementById('verifier').value=''; document.getElementById('connect-btn').disabled=true; document.getElementById('account-picker').style.display='none'; }
+
+function showAccountPicker(accounts, defaultId){
+  const list=document.getElementById('account-list');
+  list.innerHTML='';
+  accounts.forEach(a=>{
+    const btn=document.createElement('button');
+    const isDefault=a.accountIdKey===defaultId;
+    btn.style.cssText='display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:6px;border:1.5px solid '+(isDefault?'var(--blue-text)':'var(--border)')+';background:'+(isDefault?'var(--blue-bg, rgba(59,130,246,.08))':'var(--card)')+';cursor:pointer;text-align:left;width:100%;font-size:13px;';
+    const masked='····'+String(a.accountId||a.accountIdKey).slice(-4);
+    btn.innerHTML='<span style="font-weight:600;color:var(--text1)">'+(a.accountDesc||a.accountType||'Account')+'</span>'
+      +'<span style="color:var(--text3);font-size:11px;margin-left:auto">'+masked+'</span>';
+    btn.onclick=()=>selectAccount(a.accountIdKey);
+    list.appendChild(btn);
+  });
+  document.getElementById('account-picker').style.display='block';
+}
+
+async function selectAccount(accountIdKey){
+  await fetch(API+'/auth/select_account',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({account_id:accountIdKey})}).catch(()=>{});
+  document.getElementById('account-picker').style.display='none';
+  setConnected(true,accountIdKey);
+}
 
 function setConnected(on, acctId){
   _connected=on;

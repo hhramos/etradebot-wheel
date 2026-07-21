@@ -169,5 +169,6 @@
     "YOU": "Speculative"
   },
   "run_mode": "dry_run",
-  "_run_mode_comment": "Options: dry_run (log only), semi (auto-exit only), full (auto-exit + queued entries)"
+  "_run_mode_comment": "Options: dry_run (log only), semi (auto-exit only), full (auto-exit + queued entries)",
+  "preferred_account": ""
 }
