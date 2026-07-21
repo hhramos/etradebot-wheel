@@ -168,6 +168,29 @@ It answers in plain English using your real account data. It runs locally on you
 
 ---
 
+## Validating Your Rules — The Backtest Engine
+
+The guardrails above are the defaults. But how do you know the 50% close and 21 DTE rules actually work for *your* stocks?
+
+The backtest engine lets you run your exit rules against real historical data and see the results before committing to them live.
+
+**What to test first:**
+
+Open the Projection page and run the **Compare** mode — it runs 50%-only and 50%+21DTE side by side against the same tickers and the same date range, then shows you the difference in total return, cycles completed, win rate, and average days held.
+
+The 21 DTE rule wins on cycles almost every time, because closing at 21 days frees up capital for the next trade faster. But "almost" isn't proof — run it on your universe and see for yourself.
+
+**What to adjust if you disagree:**
+
+- Think 50% is too conservative? Run the backtest with 60% or 70% as your close target and compare. The KPI table shows you the trade-off.
+- Have a custom list of stocks you prefer? Paste them into the "Custom" ticker field — the backtest runs on whatever you give it.
+
+**Ollama analysis (free):** When results are ready, Ollama opens a chat pre-loaded with the full numeric results. Ask it "which tickers dragged the portfolio?" or "would rolling instead of closing have changed the outcome?" — it answers with the real backtest numbers, not generic advice.
+
+The backtest doesn't change any live positions. It's a read-only simulation. Run it as often as you want.
+
+---
+
 ## Summary — What the Bot Does While You're Not Watching
 
 Every 30 minutes during market hours, the bot:
