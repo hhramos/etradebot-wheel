@@ -69,9 +69,8 @@ The wheel strategy is perfect for this because it's slow by design. You're selli
 - Greeks calculator with Ollama AI trade thesis
 - 3-year wheel projection with interactive sliders
 - **Backtest engine** — validate your exit rules against real historical data, with Ollama-powered analysis of the results
-- Wheel projection with interactive sliders
 - Ollama AI advisor for full portfolio analysis
-- Demo mode — full UI works without a brokerage account
+- **No account needed** — screener and backtest run on live market data (yfinance) without any E\*Trade login; positions and order flow use realistic demo data
 
 ![Screener results](screenshots/Wheel%20Screener%20results.png)
 
@@ -100,6 +99,8 @@ python3 server.py
 Or double-click `start.sh` — it installs deps, starts the server, and opens the browser.
 
 Then open **http://127.0.0.1:5000/ui/index.html**.
+
+**No E\*Trade account?** Skip the login screen — the screener, backtest, Greeks, projection, and AI advisor all work immediately. See [No E\*Trade Account? No Problem.](#no-etrade-account-no-problem) below.
 
 ---
 
@@ -272,9 +273,29 @@ etradebot-wheel/
 
 ---
 
-## Demo Mode
+## No E\*Trade Account? No Problem.
 
-If `pyetrade` is not installed **or** you skip the OAuth flow, the server returns realistic demo data for all endpoints. Positions, screener, order cards, Greeks, and the 3-year projection all work without a real brokerage account.
+You do not need an E\*Trade account — or any brokerage account — to get real value from ETradeBot.
+
+Here is exactly what works without logging in:
+
+| Feature | What you get | Data source |
+|---------|-------------|-------------|
+| **Stock screener** | Full live run — Fisher Score, Wheel Score, IV, bid/ask, open interest, ranked candidates | yfinance (live market data) |
+| **Backtest engine** | Full historical simulation — any date range, any tickers, exit rule comparison, portfolio curve, Ollama analysis | yfinance (historical OHLCV) |
+| **3-year projection** | Interactive sliders, compound growth model | Your inputs |
+| **Greeks calculator** | Black-Scholes Delta/Gamma/Theta/Vega/Rho, P&L heatmap, Theta decay chart | Calculated locally |
+| **AI Advisor** | Full chat and portfolio analysis | Ollama (local) |
+
+The screener and backtest are not "demo" versions — they pull real, live market data from yfinance and run the same code that runs against a live account. The only thing missing is your real positions and buying power.
+
+**What uses realistic demo data when you're not connected:**
+
+- Positions panel (shows sample CSP and stock positions)
+- Account balance (shows a sample portfolio value)
+- Order preview and submission (shows the flow but places nothing)
+
+So if you want to learn the wheel strategy, screen for good candidates, run a backtest to see whether the 50% or 21 DTE rule works better on your target stocks, and talk it through with an AI advisor — you can do all of that today, for free, without ever connecting to E\*Trade.
 
 ---
 
@@ -314,6 +335,9 @@ Run `chmod +x start.sh` once, then double-click or run `./start.sh`.
 
 **Is this safe? Can it drain my account?**  
 No. The bot defaults to `dry_run` mode — it watches your positions and makes suggestions but places zero orders. Even in `semi` or `full` mode, it can only place option orders. It cannot withdraw money, transfer funds, or touch your cash. See [SECURITY.md](SECURITY.md) for the full breakdown.
+
+**Do I need an E\*Trade account to try this?**  
+No. The screener pulls live market data and the backtest runs full historical simulations — both work without any account or login. The positions panel and order flow show realistic demo data so you can explore the full UI. You only need an E\*Trade account when you're ready to connect to your real portfolio.
 
 **Do I need coding experience?**  
 You need to be comfortable installing Python and running a command in a terminal. You do not need to read or write any code to use it.

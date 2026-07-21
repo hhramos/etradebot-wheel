@@ -6,11 +6,20 @@ This guide assumes you have never done this before. Take it one step at a time.
 
 ---
 
+## Do You Need an E\*Trade Account?
+
+**Not to get started.** The screener, backtest engine, Greeks calculator, 3-year projection, and AI advisor all work without one. They pull live and historical market data from yfinance — no brokerage login required.
+
+You only need an E\*Trade account when you're ready to connect your real portfolio and start placing trades. Most people run the screener and backtest for a few weeks first to build confidence in the strategy before connecting.
+
+If you just want to explore, skip straight to Step 1 and Step 2 — you'll be running in under 5 minutes.
+
+---
+
 ## What You Need Before You Start
 
 - A computer running Windows, macOS, or Linux
-- An E\*Trade brokerage account with options trading enabled
-- About 30 minutes and a cup of coffee
+- About 30 minutes and a cup of coffee *(an E\*Trade account only needed for live trading)*
 
 That's it. Everything else gets installed in the steps below.
 
