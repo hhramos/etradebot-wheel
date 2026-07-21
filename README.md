@@ -67,6 +67,8 @@ The wheel strategy is perfect for this because it's slow by design. You're selli
 - Live positions with wheel action recommendations (sell CSP, roll, assign, sell CC)
 - Options screener with ranked candidates
 - Greeks calculator with Ollama AI trade thesis
+- 3-year wheel projection with interactive sliders
+- **Backtest engine** — validate your exit rules against real historical data, with Ollama-powered analysis of the results
 - Wheel projection with interactive sliders
 - Ollama AI advisor for full portfolio analysis
 - Demo mode — full UI works without a brokerage account
@@ -166,6 +168,42 @@ ollama serve
 The advisor is optional — all other features work without it.
 
 ![AI Advisor chat](screenshots/Wheel%20AI%20Advisor%20chat.png)
+
+---
+
+## Backtest Engine
+
+The backtest engine lets you run your exit rules against real historical data before you commit to them live. Access it from the **Projection** page.
+
+**What you configure:**
+
+- **Date range** — pick any historical window to test against
+- **Starting capital** — the account size to simulate
+- **Exit rule** — choose what to test:
+  - *50% profit close only*
+  - *50% profit OR 21 DTE, whichever comes first*
+  - ***Compare both side by side*** — runs both rule sets against the same data and shows you the difference
+- **Ticker universe** — all 40 screener stocks, live positions only, or a custom list you type in
+
+**What you get back:**
+
+- KPI grid: total return, number of cycles completed, win rate, average days held
+- Portfolio value curve (chart) showing how your capital grew over the period
+- Full report link with the complete trade-by-trade log
+
+**The comparison mode is the most useful part.** It runs 50%-only and 50%+21DTE in parallel so you can see — with your own tickers, your own date range — how many extra cycles the 21-DTE rule enabled by freeing up capital faster.
+
+**Ollama analysis (free):** When results are ready, Ollama automatically picks them up and opens a chat with preset prompts:
+
+- *"Which tickers performed best and why?"*
+- *"Which positions lost money?"*
+- *"Which 5 tickers should I prioritize next 6 months?"*
+- *"What difference did the 21-DTE rule make vs 50%-only? How many extra cycles?"*
+- *"What 3 things would you change about my approach?"*
+
+The AI answers with the actual backtest numbers in context — not generic advice.
+
+**Save state:** A checkbox lets you seed the live bot from your backtest's final positions, so you can pick up where the simulation ended.
 
 ---
 
@@ -284,7 +322,7 @@ You need to be comfortable installing Python and running a command in a terminal
 Yes. Run `start.sh` or `python3 server.py`. Everything works the same as Windows.
 
 **Do I need Ollama / the AI advisor?**  
-No. The screener, position monitor, order panel, and projection page all work without it. Ollama is only needed for the AI chat and trade thesis features.
+No. The screener, position monitor, order panel, projection page, and backtest engine all work without it. Ollama adds the AI chat, trade thesis, and backtest analysis features — all free when running locally.
 
 **What Ollama model should I use?**  
 `qwen2.5` for speed, `phi4` for the best analysis. Both run fine on a laptop with 16GB RAM.
@@ -304,7 +342,7 @@ E\*Trade OAuth tokens expire daily. This is an E\*Trade policy, not something th
 `full` — handles exits and queues new entries, all within your configured rules.
 
 **What is the Pro / Pro+ tier?**  
-The free version covers the full wheel strategy — screener, position monitor, advisor, projection. Pro adds the Greeks analyzer. Pro+ adds the Micro Futures ML pipeline (MES, MNQ, MYM, M2K). See the Tiers section above.
+The free version covers the full wheel strategy — screener, position monitor, advisor, projection, and backtest engine. Pro adds the Greeks analyzer. Pro+ adds the Micro Futures ML pipeline (MES, MNQ, MYM, M2K). See the Tiers section above.
 
 **Something broke — how do I report it?**  
 Open an issue on GitHub using the [bug report template](https://github.com/hhramos/etradebot-wheel/issues/new?template=bug_report.md). The template asks for your OS, Python version, and any error text — that's usually all we need.
@@ -326,3 +364,27 @@ That depends on the stocks you want to trade. A cash-secured put on a $50 stock 
 
 **Will it work if my computer goes to sleep?**  
 The bot stops monitoring when your computer sleeps or the server process stops. It picks up where it left off when you restart it — nothing is lost, but it won't have checked positions while it was off. This is intentional: you stay in control.
+
+---
+
+## Disclaimer
+
+**Please read this before you use ETradeBot. It matters.**
+
+ETradeBot is a tool, not a financial advisor. Think of it like a calculator — it does the math you ask it to do, but you are still the one who has to decide what to do with the answer.
+
+Here is what that means in plain English:
+
+- **This is not investment advice.** Nothing ETradeBot shows you — no suggestion, no screener result, no trade card, no AI advisor response — is a recommendation to buy or sell anything. It is information. What you do with that information is entirely your decision.
+
+- **You can lose real money.** Options trading involves real financial risk. The bot can help you follow a strategy, but it cannot predict the future. Stocks go down. Markets get weird. Things happen that no model ever saw coming. You can lose some or all of the money you put in.
+
+- **The software might have bugs.** Every reasonable effort has been made to make ETradeBot work correctly, but no software is perfect. There may be errors, missed signals, or unexpected behavior. Always double-check before clicking confirm on any order.
+
+- **You are responsible for your trades.** By using ETradeBot, you agree that the developer is not responsible for any money you make or lose as a result of using this software. Not for a bad trade. Not for a bug. Not for a market crash. Not for anything. Your account, your trades, your responsibility.
+
+- **Start in Dry Run mode.** Seriously. Watch the bot work for a few weeks before you let it place real orders. There is no rush. The wheel strategy works slowly by design — slow is fine.
+
+- **If you do not agree with any of this, please do not use ETradeBot.**
+
+The developer built this tool to be genuinely useful and genuinely safe — but the final check is always you.
