@@ -1,9 +1,46 @@
 """OAuth flow: /auth/init, /auth/token, /auth/status, /auth/expired, /auth/reauth_ok — extracted verbatim from server.py."""
 from srv.core import (
-    _session, app, jsonify, logger, request,
+    _CFG_PATH, _session, app, json, jsonify, logger, os, request,
 )
 
 import threading
+
+
+def _load_config_safe() -> dict:
+    """Load config.json without raising — returns {} on any error."""
+    try:
+        if os.path.exists(_CFG_PATH):
+            with open(_CFG_PATH) as f:
+                return json.load(f)
+    except Exception:
+        pass
+    return {}
+
+
+def _save_preferred_account(account_id: str):
+    """Persist preferred_account to config.json (best-effort)."""
+    try:
+        cfg = _load_config_safe() or {}
+        cfg["preferred_account"] = account_id
+        os.makedirs(os.path.dirname(_CFG_PATH), exist_ok=True)
+        with open(_CFG_PATH, "w") as f:
+            json.dump(cfg, f, indent=2)
+    except Exception:
+        pass
+
+
+def _sanitize_accounts(accts: list) -> list:
+    """Return a safe, display-ready list of account dicts."""
+    return [
+        {
+            "accountIdKey":    a.get("accountIdKey") or a.get("accountId", ""),
+            "accountId":       a.get("accountId", ""),
+            "accountDesc":     a.get("accountDesc") or a.get("accountName", ""),
+            "accountType":     a.get("accountType", ""),
+            "institutionType": a.get("institutionType", ""),
+        }
+        for a in accts
+    ]
 
 _FUTURES_URL = "http://127.0.0.1:5001"
 
@@ -106,16 +143,27 @@ def auth_token():
         accts    = accounts.get("AccountListResponse", {}).get("Accounts", {}).get("Account", [])
         if isinstance(accts, dict):
             accts = [accts]
-        if accts:
-            _session["account_id"] = accts[0].get("accountIdKey") or accts[0].get("accountId")
+
+        sanitized = _sanitize_accounts(accts) if accts else []
+
+        # Pick account: prefer config.json preferred_account, fall back to accts[0]
+        cfg_preferred = _load_config_safe().get("preferred_account")
+        chosen = None
+        if cfg_preferred and accts:
+            chosen = next((a for a in accts if (a.get("accountIdKey") or a.get("accountId")) == cfg_preferred), None)
+        if not chosen and accts:
+            chosen = accts[0]
+        if chosen:
+            _session["account_id"] = chosen.get("accountIdKey") or chosen.get("accountId")
 
         # Push credentials to futures server if it's running (best-effort, non-blocking)
         threading.Thread(target=_push_to_futures, daemon=True).start()
 
         return jsonify({
             "success":    True,
-            "account_id": _session["account_id"] or "****",
+            "account_id": _session.get("account_id") or "****",
             "connected":  True,
+            "accounts":   sanitized,
         })
     except Exception as e:
         logger.error(f"Token exchange error: {e}")
@@ -158,3 +206,37 @@ def reauth_ok():
     _session["_token_expired"] = False
     logger.info("Token expiry cleared — polling resumed")
     return jsonify({"success": True})
+
+
+@app.route("/auth/accounts", methods=["GET"])
+def auth_accounts():
+    """Return the live account list for the picker (called after /auth/token)."""
+    if not _session.get("connected"):
+        return jsonify({"error": "Not connected"}), 401
+    try:
+        import pyetrade
+        api = pyetrade.ETradeAccounts(
+            _session["consumer_key"], _session["consumer_secret"],
+            _session["access_token"], _session["access_token_secret"], dev=False,
+        )
+        raw = api.list_accounts()
+        accts = raw.get("AccountListResponse", {}).get("Accounts", {}).get("Account", [])
+        if isinstance(accts, dict):
+            accts = [accts]
+        return jsonify({"accounts": _sanitize_accounts(accts)})
+    except Exception as e:
+        return jsonify({"error": str(e), "accounts": []}), 500
+
+
+@app.route("/auth/select_account", methods=["POST"])
+def select_account():
+    """Store the user's chosen account in session and persist to config.json."""
+    if not _session.get("connected"):
+        return jsonify({"error": "Not connected"}), 401
+    data = request.get_json() or {}
+    account_id = (data.get("account_id") or "").strip()
+    if not account_id:
+        return jsonify({"error": "account_id required"}), 400
+    _session["account_id"] = account_id
+    _save_preferred_account(account_id)
+    return jsonify({"success": True, "account_id": account_id})
