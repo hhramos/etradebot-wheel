@@ -39,15 +39,29 @@ It screens ~40 stocks and surfaces the top 3 candidates with strike, expiry, cas
 - **Semi**: Auto-closes winners at 50%, asks before opening anything new.
 - **Full**: Handles exits and queues new entries within your configured rules.
 
-**What it's not:**
+**The backtest — and this is where it gets interesting for thetagang:**
 
-It doesn't pick stocks for you. It filters a universe you define. It doesn't backtest (there's a projection tool but it's illustrative, not backtested). It doesn't day trade. It's designed for monthly wheels on liquid underlyings — 2–5 trades a week, not 20 a day.
+There's a full backtester built in. You pick a date range, starting capital, your ticker universe (full 40, live positions only, or custom list), and then choose which exit rule to test:
 
-Runs locally on your machine. No cloud, no subscription, no API fees. Uses Ollama for the AI advisor (optional) — free, runs on a laptop.
+- 50% profit close only
+- 50% profit OR 21 DTE, whichever comes first
+- **Compare both side by side**
+
+That last option is the one I actually use. It runs both rule sets against the same historical data and shows you the KPI difference — total return, number of cycles completed, win rate, average days held. The 21 DTE rule almost always wins on cycles because you free up capital faster, but the comparison makes the case with your own data on your own tickers.
+
+When it's done, Ollama (if you have it running) automatically drops into the results and you can ask it things like:
+
+- *"Which 5 tickers from the universe should I prioritise next 6 months?"*
+- *"What difference did the 21-DTE rule make vs 50%-only? How many extra cycles did it enable?"*
+- *"What 3 things would you change about my approach based on these results?"*
+
+It answers with the actual backtest numbers in context, not generic advice. The whole thing is free — Ollama runs locally.
+
+Runs locally on your machine. No cloud, no subscription, no API fees.
 
 GitHub: https://github.com/hhramos/etradebot-wheel
 
-Happy to answer questions about the strategy rules or why I made specific design choices. The 50% close enforcement was the most controversial decision internally — happy to defend it.
+Happy to answer questions about the strategy rules or the backtest methodology. The 50% vs 21 DTE comparison was the most useful thing I built — happy to share results.
 
 ---
 
@@ -164,11 +178,16 @@ The advisory endpoint streams from Ollama via SSE. The prompt includes the full 
 
 If `pyetrade` isn't installed or OAuth is skipped, all endpoints return realistic synthetic data. Useful for testing the UI layer without a live session.
 
+**Backtest engine:**
+
+Built into the projection page. Configurable date range, starting capital, ticker universe (full 40, live positions only, or custom). The interesting part is the exit rule comparison mode — it runs 50%-only and 50%+21DTE in parallel and shows you the KPI diff: total return, cycles completed, win rate, average days held. When results are ready, Ollama picks them up automatically and opens a chat interface with preset prompts: "which tickers outperformed and why," "what would you change," "how many extra cycles did the 21-DTE rule enable." The LLM has the full numeric results as context so it answers with real numbers, not generic advice.
+
+`POST /backtest/run` → runs async, polls `/backtest/status` for progress → `/backtest/context` feeds results to Ollama → `/backtest/analyze` streams the chat response via SSE. Full report available at `/backtest/report`.
+
 **What I deliberately didn't build:**
 
 - No websocket — SSE is sufficient for the update frequency this strategy needs
 - No database — `wheel_state.json` and rotating logs are enough for a single-account local tool
-- No backtesting engine — the projection page is illustrative, not a backtest
 
 The whole thing runs on a laptop. No cloud dependencies, no recurring costs.
 
