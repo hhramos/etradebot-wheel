@@ -342,11 +342,6 @@ E\*Trade OAuth tokens expire daily. This is an E\*Trade policy, not something th
 `semi` — automatically closes winning trades at 50% profit, asks before opening new ones.  
 `full` — handles exits and queues new entries, all within your configured rules.
 
-**What's the difference between the three modes?**  
-`dry_run` — watches and suggests, places no orders (start here).  
-`semi` — automatically closes winning trades at 50% profit, asks before opening new ones.  
-`full` — handles exits and queues new entries, all within your configured rules.
-
 **What is the Pro / Pro+ tier?**  
 The free version covers the full wheel strategy — screener, position monitor, advisor, projection, and backtest engine. Pro adds the Greeks analyzer. Pro+ adds the Micro Futures ML pipeline (MES, MNQ, MYM, M2K). See the Tiers section above.
 
@@ -370,3 +365,27 @@ That depends on the stocks you want to trade. A cash-secured put on a $50 stock 
 
 **Will it work if my computer goes to sleep?**  
 The bot stops monitoring when your computer sleeps or the server process stops. It picks up where it left off when you restart it — nothing is lost, but it won't have checked positions while it was off. This is intentional: you stay in control.
+
+---
+
+## Disclaimer
+
+**Please read this before you use ETradeBot. It matters.**
+
+ETradeBot is a tool, not a financial advisor. Think of it like a calculator — it does the math you ask it to do, but you are still the one who has to decide what to do with the answer.
+
+Here is what that means in plain English:
+
+- **This is not investment advice.** Nothing ETradeBot shows you — no suggestion, no screener result, no trade card, no AI advisor response — is a recommendation to buy or sell anything. It is information. What you do with that information is entirely your decision.
+
+- **You can lose real money.** Options trading involves real financial risk. The bot can help you follow a strategy, but it cannot predict the future. Stocks go down. Markets get weird. Things happen that no model ever saw coming. You can lose some or all of the money you put in.
+
+- **The software might have bugs.** Every reasonable effort has been made to make ETradeBot work correctly, but no software is perfect. There may be errors, missed signals, or unexpected behavior. Always double-check before clicking confirm on any order.
+
+- **You are responsible for your trades.** By using ETradeBot, you agree that the developer is not responsible for any money you make or lose as a result of using this software. Not for a bad trade. Not for a bug. Not for a market crash. Not for anything. Your account, your trades, your responsibility.
+
+- **Start in Dry Run mode.** Seriously. Watch the bot work for a few weeks before you let it place real orders. There is no rush. The wheel strategy works slowly by design — slow is fine.
+
+- **If you do not agree with any of this, please do not use ETradeBot.**
+
+The developer built this tool to be genuinely useful and genuinely safe — but the final check is always you.
