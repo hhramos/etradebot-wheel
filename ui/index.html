@@ -703,9 +703,11 @@ code{font-family:var(--mono);font-size:11px;background:var(--bg3);padding:1px 5p
         </div>
         <div class="status-row"><div class="sdot" id="oauth-dot" style="background:var(--text3)"></div><span id="oauth-txt">Confirm credentials first</span></div>
         <!-- Account picker — shown only when multiple sub-accounts exist -->
-        <div id="account-picker" style="display:none;margin-top:14px;">
-          <div style="font-size:12px;color:var(--text3);margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Choose account</div>
-          <div id="account-list" style="display:flex;flex-direction:column;gap:6px;"></div>
+        <div id="account-picker" style="display:none;margin-top:10px;">
+          <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;font-weight:600;display:block;margin-bottom:4px;">Account</label>
+          <select id="account-select"
+                  style="width:100%;padding:6px 8px;border-radius:6px;border:1px solid var(--border);background:var(--card);color:var(--text1);font-size:13px;cursor:pointer;"
+                  onchange="selectAccount(this.value)"></select>
         </div>
       </div>
     </div>
@@ -1348,22 +1350,18 @@ function connectEtrade(){
       showCredErr('Could not reach server. Is server.py still running?');
     });
 }
-function clearOAuth(){ setStep(CREDS.isSet()?1:0); document.getElementById('verifier').value=''; document.getElementById('connect-btn').disabled=true; document.getElementById('account-picker').style.display='none'; }
+function clearOAuth(){ setStep(CREDS.isSet()?1:0); document.getElementById('verifier').value=''; document.getElementById('connect-btn').disabled=true; document.getElementById('account-picker').style.display='none'; document.getElementById('account-select').innerHTML=''; }
 
 function showAccountPicker(accounts, defaultId){
-  const list=document.getElementById('account-list');
-  list.innerHTML='';
-  accounts.forEach(a=>{
-    const btn=document.createElement('button');
-    const isDefault=a.accountIdKey===defaultId;
-    btn.style.cssText='display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:6px;border:1.5px solid '+(isDefault?'var(--blue-text)':'var(--border)')+';background:'+(isDefault?'var(--blue-bg, rgba(59,130,246,.08))':'var(--card)')+';cursor:pointer;text-align:left;width:100%;font-size:13px;';
+  const sel=document.getElementById('account-select');
+  sel.innerHTML=accounts.map(a=>{
     const masked='····'+String(a.accountId||a.accountIdKey).slice(-4);
-    btn.innerHTML='<span style="font-weight:600;color:var(--text1)">'+(a.accountDesc||a.accountType||'Account')+'</span>'
-      +'<span style="color:var(--text3);font-size:11px;margin-left:auto">'+masked+'</span>';
-    btn.onclick=()=>selectAccount(a.accountIdKey);
-    list.appendChild(btn);
-  });
+    const label=(a.accountDesc||a.accountType||'Account')+' '+masked;
+    return '<option value="'+a.accountIdKey+'"'+(a.accountIdKey===defaultId?' selected':'')+'>'+label+'</option>';
+  }).join('');
   document.getElementById('account-picker').style.display='block';
+  // Auto-confirm if the pre-selected account is the server's default
+  selectAccount(sel.value);
 }
 
 async function selectAccount(accountIdKey){
@@ -1898,15 +1896,20 @@ function loadScreener(){
     const banner=document.getElementById('oc-demo-banner');
     if(banner) banner.style.display=d.demo?'flex':'none';
     _activePick=null;   // reset on every fresh screener load
-    applyFilters();     // applyFilters now always rebuilds top-3
-    // Apply demo lock overlay to order-cards grid
-    const ocGrid=document.getElementById('order-cards');
-    if(ocGrid){ ocGrid.classList.toggle('oc-demo-block', !!d.demo); }
-    const nav2=d.account_net_value||0;
-    const ocNote=document.getElementById('oc-acct-note');
-    if(ocNote&&nav2>0) ocNote.textContent='5% cap = $'+(nav2*0.05).toLocaleString(undefined,{maximumFractionDigits:0})+' per position';
-    // Reload positions now that screener cache is populated — Fisher/Wheel scores will join
-    if(_connected) loadPositions();
+    try {
+      applyFilters();     // applyFilters now always rebuilds top-3
+      // Apply demo lock overlay to order-cards grid
+      const ocGrid=document.getElementById('order-cards');
+      if(ocGrid){ ocGrid.classList.toggle('oc-demo-block', !!d.demo); }
+      const nav2=d.account_net_value||0;
+      const ocNote=document.getElementById('oc-acct-note');
+      if(ocNote&&nav2>0) ocNote.textContent='5% cap = $'+(nav2*0.05).toLocaleString(undefined,{maximumFractionDigits:0})+' per position';
+      // Reload positions now that screener cache is populated — Fisher/Wheel scores will join
+      if(_connected) loadPositions();
+    } catch(renderErr) {
+      console.error('Screener render error:', renderErr);
+      document.getElementById('screener-wrap').innerHTML='<div class="empty">Display error — check browser console (F12)</div>';
+    }
   }).catch(()=>{ document.getElementById('screener-wrap').innerHTML='<div class="empty">Server offline — run start.sh / start.bat</div>'; });
 }
 function applyFilters(){
