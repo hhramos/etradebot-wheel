@@ -888,7 +888,7 @@ code{font-family:var(--mono);font-size:11px;background:var(--bg3);padding:1px 5p
         <i class="ti ti-radar"></i> Load signals
       </button>
       <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2);cursor:pointer;margin-left:4px">
-        <input type="checkbox" id="hide-over-limit" checked onchange="applyFilters()" style="width:auto;accent-color:var(--blue)">
+        <input type="checkbox" id="hide-over-limit" onchange="applyFilters()" style="width:auto;accent-color:var(--blue)">
         Hide stocks &gt;5% of account
       </label>
       <span id="acct-val-note" style="font-size:10px;color:var(--text3)"></span>
@@ -1944,7 +1944,14 @@ function _sortVal(c, key){
 }
 function fisherColor(s){ return s>=12?'var(--green-text)':s>=9?'#7EC820':s>=6?'var(--amber-text)':'var(--red-text)'; }
 function renderScreener(rows){
-  if(!rows.length){ document.getElementById('screener-wrap').innerHTML='<div class="empty">No candidates match filters</div>'; return; }
+  if(!rows.length){
+    const total=_candidates.length;
+    const hint=total>0
+      ? `<div class="empty">No candidates match filters — ${total} total screened.<br><a href="#" onclick="document.getElementById('hide-over-limit').checked=false;document.getElementById('f-fisher').value='0';document.getElementById('f-wheel').value='';applyFilters();return false;" style="color:var(--blue)">Clear filters</a></div>`
+      : '<div class="empty">No candidates match filters</div>';
+    document.getElementById('screener-wrap').innerHTML=hint;
+    return;
+  }
   const thead=`<thead><tr>
     <th style="width:110px" title="Ticker. ★=top pick. 📈=post-earnings IV crush window. over 5%=exceeds position cap.">Stock</th>
     <th onclick="sortScreener('price')" style="cursor:pointer" title="Current share price. CSP strike is set ~5% below this. Click to sort.">Price/sh ↕</th>
