@@ -79,27 +79,13 @@ def bot_projection_data():
         except Exception as e:
             logger.warning("projection wheel_state read: %s", e)
 
-    # Reinvestment log (last 10 REINVEST_DECISION events)
+    # Reinvestment log (last 15 events from SQLite)
     reinvest_log = []
-    log_path = os.path.join(_BASE_DIR, "data", "trade_log.json")
-    if os.path.exists(log_path):
-        try:
-            with open(log_path) as f:
-                all_log = _json.load(f)
-            reinvest_log = [
-                e for e in reversed(all_log)
-                if e.get("event") in (
-                    "REINVEST_DECISION", "CYCLE_COMPLETE",
-                    "ASSIGNED",          "CALLED_AWAY",
-                    "CC_ORDER_PREPARED", "CC_ORDER_SUBMITTED",
-                    "ROLL_EXECUTED",     "POLL",
-                    "DAILY_SUMMARY",
-                    "QUEUED_EXIT",       "QUEUED_ENTRY",   # wheel_bot queued actions
-                    "EXIT_PLACED",       "CSP_FILLED",     # wheel_bot executions
-                )
-            ][:15]
-        except Exception:
-            pass
+    try:
+        from data import db as _db
+        reinvest_log = _db.query_reinvest_log(limit=15)
+    except Exception:
+        pass
 
     # Universe tiers
     universe = {}
@@ -129,14 +115,12 @@ def bot_projection_data():
 
 @app.route("/data/log", methods=["GET"])
 def data_log():
-    """Return last N entries from trade_log.json."""
+    """Return last N entries from the trade_events table."""
     n = min(int(request.args.get("n", 50)), 500)
     try:
-        if not os.path.exists(TRADE_LOG):
-            return jsonify({"entries": [], "total": 0})
-        with open(TRADE_LOG, "r") as f:
-            entries = _json.load(f)
-        return jsonify({"entries": entries[-n:], "total": len(entries)})
+        from data import db as _db
+        entries = _db.get_log_entries(n=n)
+        return jsonify({"entries": entries, "total": len(entries)})
     except Exception as e:
         return jsonify({"error": str(e), "entries": []})
 

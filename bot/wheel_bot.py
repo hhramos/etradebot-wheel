@@ -31,7 +31,6 @@ logger = logging.getLogger(__name__)
 
 # ── Config path ────────────────────────────────────────────────────────────
 _CFG_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "config.json")
-_LOG_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "trade_log.json")
 
 
 def _load_config() -> dict:
@@ -44,14 +43,12 @@ def _load_config() -> dict:
 
 def _append_trade_log(entry: dict) -> None:
     try:
-        try:
-            with open(_LOG_PATH) as f:
-                log = json.load(f)
-        except Exception:
-            log = []
-        log.append(entry)
-        with open(_LOG_PATH, "w") as f:
-            json.dump(log[-500:], f, indent=2, default=str)  # keep last 500 entries
+        from data import db as _db
+        _db.record_trade_event(
+            event=entry.get("event", "UNKNOWN"),
+            ticker=entry.get("ticker"),
+            detail=entry,
+        )
     except Exception as e:
         logger.warning(f"trade_log write failed: {e}")
 
@@ -440,8 +437,12 @@ def run_cycle(session: dict, dry_run: bool | None = None) -> dict:
             "profit": f.get("profit"),
             "premium": f.get("premium"),
         })
-    # Also keep the raw summary for debugging
-    _append_trade_log(summary)
+    # Record bot run summary to SQLite
+    try:
+        from data import db as _db
+        _db.record_bot_run(summary)
+    except Exception as _e:
+        logger.warning(f"record_bot_run failed: {_e}")
     session["_last_bot_run"] = summary
 
     n_q = len(summary["queued"]) + len(summary["entries"])

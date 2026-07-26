@@ -35,6 +35,11 @@ def screener():
         _annotate_candidates(result)
         result = _sanitize_nan(result)
         _session["_screener_cache"] = {c["ticker"]: c for c in result}
+        try:
+            from data import db as _db
+            _db.record_screener_snapshot(candidates=result, nav=nav)
+        except Exception:
+            pass
         # VIX regime indicator (best-effort — never blocks screener)
         vix_level = None
         try:
