@@ -1,9 +1,22 @@
 """/screener*, /run — extracted verbatim from server.py."""
+import math as _math
+
 from srv.core import (
     _BASE_DIR,
     _annotate_candidates, _session, app, jsonify, logger, os,
     request,
 )
+
+
+def _sanitize_nan(obj):
+    """Recursively replace float NaN/inf with None so jsonify produces valid JSON."""
+    if isinstance(obj, float):
+        return None if (_math.isnan(obj) or _math.isinf(obj)) else obj
+    if isinstance(obj, dict):
+        return {k: _sanitize_nan(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_sanitize_nan(v) for v in obj]
+    return obj
 
 
 @app.route("/screener", methods=["GET"])
@@ -20,6 +33,7 @@ def screener():
         )
         result = screener_obj.run()
         _annotate_candidates(result)
+        result = _sanitize_nan(result)
         _session["_screener_cache"] = {c["ticker"]: c for c in result}
         # VIX regime indicator (best-effort — never blocks screener)
         vix_level = None
