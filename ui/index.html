@@ -1383,7 +1383,7 @@ function setConnected(on, acctId){
     document.getElementById('oauth-dot').style.background='var(--green-text)';
     document.getElementById('refresh-btn').disabled=false;
     loadBotMode();
-    loadAccount(); loadPositions(); loadScreener();
+    loadScreener(); loadAccount(); loadPositions();
     checkAdvisorStatus();
     startPollWatcher();
     loadPending();
@@ -2779,7 +2779,7 @@ document.addEventListener('keydown',e=>{
   if(e.key==='Escape'&&_advisorRunning) stopStream();
 });
 
-function refreshAll(){ loadAccount(); loadPositions(); loadScreener(); loadPending(); }
+function refreshAll(){ loadScreener(); loadAccount(); loadPositions(); loadPending(); }
 
 // ── Server log export ──────────────────────────────────────────────────────
 function loadLogMeta(){
