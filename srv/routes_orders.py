@@ -1,7 +1,7 @@
 """Order placement: /order/preview, /order/submit, /order/chain, /order/roll — extracted verbatim from server.py."""
 from srv.core import (
-    _append_trade_log, _et_now_str, _session, app, datetime, jsonify,
-    logger, request,
+    _append_trade_log, _et_now_str, _pending_actions, _pending_lock,
+    _prepare_cc_order, _session, app, datetime, jsonify, logger, request,
 )
 
 
@@ -498,3 +498,31 @@ def order_roll():
         logger.error(f"Roll failed: {e}")
         return jsonify({"success": False, "error": str(e),
                         "detail": "Roll was NOT executed. Check server log."}), 500
+
+
+@app.route("/order/cc_prepare", methods=["POST"])
+def cc_prepare():
+    """Queue a covered call order on demand for the given ticker/position."""
+    if not _session.get("connected"):
+        return jsonify({"error": "Not connected"}), 401
+    data     = request.get_json() or {}
+    ticker   = (data.get("ticker") or "").strip().upper()
+    cost     = float(data.get("cost", 0) or 0)
+    shares   = int(data.get("shares", 0) or 0)
+    current  = float(data.get("current", cost) or cost)
+    if not ticker or shares < 100:
+        return jsonify({"error": "ticker and shares>=100 required"}), 400
+    # Skip if already queued
+    with _pending_lock:
+        already = any(a["ticker"] == ticker and a["type"] == "SELL_CC"
+                      and a["status"] == "pending" for a in _pending_actions)
+    if already:
+        return jsonify({"success": True, "queued": False, "reason": "already_pending"})
+    action = _prepare_cc_order(ticker, cost, shares, current)
+    if not action:
+        return jsonify({"success": False, "error": "Could not prepare CC order"}), 500
+    action["reasoning"] = f"Manual request. {action.get('reasoning', '')}"
+    with _pending_lock:
+        _pending_actions.append(action)
+    logger.info(f"[CC_PREP] On-demand: {ticker} ${action['strike']}C {action['expiry']} ×{action['contracts']}c")
+    return jsonify({"success": True, "queued": True, "action": action})

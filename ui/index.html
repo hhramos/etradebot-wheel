@@ -1829,7 +1829,18 @@ function executeAction(ticker, action, pos){
     return;
   }
   if(action==='SELL_CC'){
-    alert('Use the pending CC orders panel — it prepares the covered call order for review.');
+    const shares = (pos.contracts||0)*100 || (pos.shares||0);
+    fetch(API+'/order/cc_prepare',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ticker, cost:pos.cost||0, shares, current:pos.current||pos.cost||0})
+    }).then(r=>r.json()).then(d=>{
+      if(d.success){
+        loadPending();
+        const panel=document.getElementById('pending-panel');
+        if(panel){ panel.scrollIntoView({behavior:'smooth',block:'start'}); }
+      } else {
+        alert('Could not prepare CC order: '+(d.error||'unknown'));
+      }
+    }).catch(()=>alert('Server error preparing CC order'));
     return;
   }
 }
