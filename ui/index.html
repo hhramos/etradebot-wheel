@@ -1847,7 +1847,11 @@ function executeAction(ticker, action, pos){
 
 function loadScreener(){
   document.getElementById('screener-wrap').innerHTML='<div class="empty"><div class="spin"></div> Running screener···</div>';
-  fetch(API+'/screener').then(r=>r.json()).then(d=>{
+  fetch(API+'/screener').then(r=>{
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    return r.json();
+  }).then(d=>{
+    try {
     _candidates = d.candidates || [];
     window._candidates = _candidates;
     window._screenerIsLive = !d.demo;
@@ -1921,7 +1925,11 @@ function loadScreener(){
       console.error('Screener render error:', renderErr);
       document.getElementById('screener-wrap').innerHTML='<div class="empty">Display error — check browser console (F12)</div>';
     }
-  }).catch(()=>{ document.getElementById('screener-wrap').innerHTML='<div class="empty">Server offline — run start.sh / start.bat</div>'; });
+    } catch(outerErr) {
+      console.error('Screener outer error:', outerErr);
+      document.getElementById('screener-wrap').innerHTML='<div class="empty">Display error — check browser console (F12)</div>';
+    }
+  }).catch((fetchErr)=>{ console.error('Screener fetch error:', fetchErr); document.getElementById('screener-wrap').innerHTML='<div class="empty">Server offline — run start.sh / start.bat</div>'; });
 }
 function applyFilters(){
   const fs=parseInt(document.getElementById('f-fisher').value)||0;
