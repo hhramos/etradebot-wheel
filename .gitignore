@@ -18,6 +18,8 @@ data/trade_log.json
 data/memory.json
 data/wheel_state.json
 data/*.log
+data/etradebot.db
+data/*.migrated
 
 # IDE
 .vscode/

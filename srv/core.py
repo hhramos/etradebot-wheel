@@ -769,6 +769,11 @@ TRADE_LOG     = os.path.join(DATA_DIR, "trade_log.json")
 def _ensure_dirs():
     os.makedirs(DATA_DIR,      exist_ok=True)
     os.makedirs(SNAPSHOTS_DIR, exist_ok=True)
+    try:
+        from data import db as _db_mod
+        _db_mod.init_db()
+    except Exception as _e:
+        logger.warning(f"db init skipped: {_e}")
 
 
 def _et_now_str() -> str:
@@ -795,19 +800,14 @@ def _et_now_str() -> str:
 
 
 def _append_trade_log(entry: dict):
-    """Append one entry to data/trade_log.json (creates file if missing)."""
-    _ensure_dirs()
+    """Write a trade event to the SQLite database."""
     try:
-        existing = []
-        if os.path.exists(TRADE_LOG):
-            with open(TRADE_LOG, "r") as f:
-                existing = _json.load(f)
-        existing.append(entry)
-        # Keep last 2000 entries to prevent unbounded growth
-        if len(existing) > 2000:
-            existing = existing[-2000:]
-        with open(TRADE_LOG, "w") as f:
-            _json.dump(existing, f, indent=2)
+        from data import db as _db_mod
+        _db_mod.record_trade_event(
+            event=entry.get("event", "UNKNOWN"),
+            ticker=entry.get("ticker"),
+            detail=entry,
+        )
     except Exception as e:
         logger.warning(f"trade_log write failed: {e}")
 
