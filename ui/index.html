@@ -152,6 +152,10 @@ code{font-family:var(--mono);font-size:11px;background:var(--bg3);padding:1px 5p
 .order-card.csp-active{border-color:var(--blue)}
 .order-card.btc-ready{border-color:var(--red)}
 .order-card.filled{border-color:var(--green)}
+.explain-box{background:var(--bg3);border-left:2px solid var(--blue);border-radius:0 var(--radius) var(--radius) 0;padding:7px 10px;margin:8px 0;font-size:11px;color:var(--text2);line-height:1.5}
+.explain-box.btc{border-left-color:var(--red)}
+.explain-box.cc{border-left-color:var(--amber)}
+.explain-box strong{color:var(--text1)}
 .order-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding-bottom:8px;border-bottom:0.5px solid var(--border)}
 .order-title{font-size:12px;font-weight:500}
 .order-field{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:0.5px solid var(--border);font-size:12px}
@@ -1496,7 +1500,7 @@ function loadPositions(){
         return `<tr class="ord-row">
           <td colspan="2">
             <span style="color:var(--text3);font-size:11px;margin-right:4px">└─</span>
-            <span class="ord-no-gtc"><i class="ti ti-alert-triangle" style="font-size:10px"></i> No GTC order — 50% target = $${target} ${p.exit_reason&&p.exit_reason.startsWith('21 DTE')?'· <b>21 DTE EXIT ACTIVE</b>':''}</span>
+            <span class="ord-no-gtc"><i class="ti ti-alert-triangle" style="font-size:10px"></i> No exit order set — click <b>Set GTC</b> to automatically close at 50% profit ($${target}). ${p.exit_reason&&p.exit_reason.startsWith('21 DTE')?'· <b style="color:var(--red-text)">21 DTE EXIT ACTIVE — close now</b>':''}</span>
           </td>
           <td colspan="2"></td>
           <td style="text-align:right;padding-right:8px">
@@ -2117,6 +2121,10 @@ function _renderPickCards(c){
     <div class="order-field"><span class="of-label">Cash required</span><span class="of-val red" id="oc-cash">$${cashReq.toLocaleString()}${collPct}</span></div>
     <div class="order-field"><span class="of-label">Return on cash</span><span class="of-val green">${roc}%</span></div>
     <div class="order-field"><span class="of-label">TIF</span><span class="of-val">Day</span></div>
+    <div class="explain-box">
+      You collect <strong>$${totalCr}</strong> cash today. In return, you agree to buy 100 shares of <strong>${c.ticker}</strong> at <strong>$${c.csp_strike}/sh</strong> if the stock falls to that price by ${c.csp_expiry}.
+      If the stock stays <em>above</em> $${c.csp_strike}, you keep the cash — no shares, no strings attached. Your worst case: you own ${c.ticker} at $${be}/sh (your breakeven after the premium you received).
+    </div>
     <div class="contracts-row">
       <span>Contracts</span>
       <input type="range" min="1" max="10" value="1" step="1" id="oc-slider" oninput="updateOC(this.value,${premium},${c.csp_strike})">
@@ -2151,6 +2159,10 @@ function _renderPickCards(c){
       <div class="pnl-bar-label">P&amp;L to 50% target</div>
       <div class="pnl-track"><div class="pnl-fill" id="btc-pnl-fill" style="width:0%"></div></div>
       <div class="pnl-ticks"><span>$0</span><span>50% = $${btcProfit}</span><span>max $${totalCr}</span></div>
+    </div>
+    <div class="explain-box btc">
+      You already received <strong>$${totalCr}</strong>. This order buys back your obligation for <strong>$${btcLimit}/sh</strong> — that is 50% of what you were paid.
+      The rule: always close at 50% profit. You have earned half your maximum gain in less than half the time. Close it, free up your cash, and open a fresh trade next month.
     </div>
     ${!cspFilled?`<div class="lock-box" id="btc-lock-box"><i class="ti ti-lock" style="font-size:13px"></i><span>Submit CSP first — BTC unlocks once E-Trade confirms fill</span></div>`:''}
     <div class="btn-row" id="btc-btn-row" ${!cspFilled?'style="display:none"':''}>
@@ -3223,6 +3235,10 @@ function renderPendingCard(a){
       <div class="pf-item"><div class="pf-label">Cost basis</div><div class="pf-val" style="color:var(--text2)">$${a.cost_basis}</div></div>
     </div>
     <div class="pending-reason"><i class="ti ti-info-circle" style="font-size:10px"></i> ${a.reasoning||''}</div>
+    <div class="explain-box cc">
+      You already own <strong>${a.shares} shares of ${a.ticker}</strong> (cost $${a.cost_basis}/sh). Selling this covered call means someone pays you <strong>$${a.limit_price}/sh</strong> today for the right to buy your shares at <strong>$${a.strike}</strong> by ${a.expiry}.
+      If the stock stays <em>below</em> $${a.strike}, you keep the cash <em>and</em> your shares — then repeat next month. If it rises above, you sell at $${a.strike} — still a profit above your $${a.cost_basis} cost.
+    </div>
     <div class="pending-btns">
       <span style="font-size:11px;color:var(--text2)">Limit:</span>
       <input class="pending-limit-inp" type="number" id="plimit-${a.id}"
