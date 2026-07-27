@@ -255,8 +255,11 @@ def bot_pending_approve(action_id):
         action = next((a for a in _pending_actions if a["id"] == action_id), None)
     if not action:
         return jsonify({"error": "Action not found"}), 404
-    if action["status"] != "pending":
+    if action["status"] not in ("pending", "failed"):
         return jsonify({"error": f"Action already {action['status']}"}), 400
+    # Reset failed actions so they can be retried
+    with _pending_lock:
+        action["status"] = "pending"
 
     # Allow override of limit price from request body
     data        = request.get_json() or {}
@@ -274,7 +277,8 @@ def bot_pending_approve(action_id):
         order_term = ("GOOD_UNTIL_CANCEL"
                       if action.get("tif", "DAY").upper() == "GTC"
                       else "GOOD_FOR_DAY")
-        client_order_id = f"CC{abs(hash(action_id)) % 10000000}"
+        import uuid as _uuid
+        client_order_id = f"CC{_uuid.uuid4().hex[:8].upper()}"
         body = (
             '<?xml version="1.0" encoding="utf-8"?>'
             '<PlaceOrderRequest>'
@@ -316,7 +320,19 @@ def bot_pending_approve(action_id):
             _session["_token_expired"] = True
             raise Exception("Token expired — re-authenticate via UI")
         if not resp.ok:
-            raise Exception(f"E*Trade {resp.status_code}: {resp.text[:300]}")
+            err_text = resp.text[:400]
+            # Code 101: E*Trade duplicate-order timeout — retryable, keep pending
+            if "<code>101</code>" in err_text:
+                logger.warning(f"[CC] E*Trade 101 (duplicate timeout) — left pending for retry")
+                with _pending_lock:
+                    action["status"] = "pending"
+                return jsonify({
+                    "success": False,
+                    "error": "E*Trade rejected as duplicate (code 101). Click Send again — a fresh order ID will be used.",
+                    "retryable": True,
+                    "action": action,
+                }), 409
+            raise Exception(f"E*Trade {resp.status_code}: {err_text}")
         result   = resp.json()
         order_id = (result.get("PlaceOrderResponse", {})
                          .get("OrderIds", {}).get("orderId", "?"))
