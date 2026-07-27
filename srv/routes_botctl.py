@@ -266,6 +266,35 @@ def bot_pending_approve(action_id):
     limit_price = float(data.get("limit_price", action["limit_price"]))
     contracts   = int(data.get("contracts",   action["contracts"]))
 
+    # Options only trade during regular market hours (9:30–16:00 ET)
+    # E*Trade returns a cryptic 101 if submitted pre-market — catch it early.
+    import datetime as _dt
+    def _et_now_naive():
+        utc = _dt.datetime.now(_dt.timezone.utc)
+        import calendar as _cal
+        y = utc.year
+        mar = _dt.datetime(y, 3, 8, tzinfo=_dt.timezone.utc)
+        dst_start = mar + _dt.timedelta(days=(6 - mar.weekday()) % 7)
+        nov = _dt.datetime(y, 11, 1, tzinfo=_dt.timezone.utc)
+        dst_end   = nov + _dt.timedelta(days=(6 - nov.weekday()) % 7)
+        offset = -4 if dst_start <= utc < dst_end else -5
+        return (utc + _dt.timedelta(hours=offset)).replace(tzinfo=None)
+    et_now  = _et_now_naive()
+    et_time = et_now.time()
+    market_open  = _dt.time(9, 30)
+    market_close = _dt.time(16, 0)
+    is_weekday   = et_now.weekday() < 5
+    if not is_weekday or not (market_open <= et_time < market_close):
+        with _pending_lock:
+            action["status"] = "pending"
+        open_str = "9:30 AM" if is_weekday else "Monday 9:30 AM"
+        return jsonify({
+            "success":   False,
+            "error":     f"Options only trade during regular market hours (9:30–4:00 PM ET). Current ET time: {et_time.strftime('%I:%M %p')}. The order is ready — click Send again after {open_str} ET.",
+            "retryable": True,
+            "action":    action,
+        }), 409
+
     try:
         from requests_oauthlib import OAuth1Session as _OA1
         oauth = _OA1(
