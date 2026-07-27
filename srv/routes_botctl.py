@@ -264,41 +264,60 @@ def bot_pending_approve(action_id):
     contracts   = int(data.get("contracts",   action["contracts"]))
 
     try:
-        import pyetrade
-        api = pyetrade.ETradeOrder(
-            _session["consumer_key"], _session["consumer_secret"],
-            _session["access_token"], _session["access_token_secret"], dev=False,
+        from requests_oauthlib import OAuth1Session as _OA1
+        oauth = _OA1(
+            _session["consumer_key"],
+            client_secret         = _session["consumer_secret"],
+            resource_owner_key    = _session["access_token"],
+            resource_owner_secret = _session["access_token_secret"],
         )
-        body = f"""<?xml version="1.0" encoding="utf-8"?>
-<PlaceOrderRequest>
-  <orderType>OPTN</orderType>
-  <clientOrderId>CC{abs(hash(action_id)) % 10000000}</clientOrderId>
-  <Order>
-    <allOrNone>false</allOrNone>
-    <priceType>LIMIT</priceType>
-    <orderTerm>{"GOOD_UNTIL_CANCEL" if action.get("tif","DAY").upper()=="GTC" else "GOOD_FOR_DAY"}</orderTerm>
-    <marketSession>REGULAR</marketSession>
-    <limitPrice>{limit_price}</limitPrice>
-    <Instrument>
-      <Product>
-        <securityType>OPTN</securityType>
-        <symbol>{action["ticker"].upper()}</symbol>
-        <callPut>CALL</callPut>
-        <expiryYear>{action["expiry"][:4]}</expiryYear>
-        <expiryMonth>{action["expiry"][5:7]}</expiryMonth>
-        <expiryDay>{action["expiry"][8:10]}</expiryDay>
-        <strikePrice>{action["strike"]}</strikePrice>
-      </Product>
-      <orderAction>SELL_OPEN</orderAction>
-      <quantityType>QUANTITY</quantityType>
-      <quantity>{contracts}</quantity>
-    </Instrument>
-  </Order>
-</PlaceOrderRequest>"""
-        result = api.place_equity_order(
-            resp_format="json", account_id=_session["account_id"],
-            order_xml=body
+        order_term = ("GOOD_UNTIL_CANCEL"
+                      if action.get("tif", "DAY").upper() == "GTC"
+                      else "GOOD_FOR_DAY")
+        client_order_id = f"CC{abs(hash(action_id)) % 10000000}"
+        body = (
+            '<?xml version="1.0" encoding="utf-8"?>'
+            '<PlaceOrderRequest>'
+            f'<orderType>OPTN</orderType>'
+            f'<clientOrderId>{client_order_id}</clientOrderId>'
+            '<Order>'
+            '<allOrNone>false</allOrNone>'
+            '<priceType>LIMIT</priceType>'
+            f'<orderTerm>{order_term}</orderTerm>'
+            '<marketSession>REGULAR</marketSession>'
+            f'<limitPrice>{limit_price}</limitPrice>'
+            '<Instrument>'
+            '<Product>'
+            '<securityType>OPTN</securityType>'
+            f'<symbol>{action["ticker"].upper()}</symbol>'
+            '<callPut>CALL</callPut>'
+            f'<expiryYear>{action["expiry"][:4]}</expiryYear>'
+            f'<expiryMonth>{action["expiry"][5:7]}</expiryMonth>'
+            f'<expiryDay>{action["expiry"][8:10]}</expiryDay>'
+            f'<strikePrice>{action["strike"]}</strikePrice>'
+            '</Product>'
+            '<orderAction>SELL_OPEN</orderAction>'
+            '<quantityType>QUANTITY</quantityType>'
+            f'<quantity>{contracts}</quantity>'
+            '</Instrument>'
+            '</Order>'
+            '</PlaceOrderRequest>'
         )
+        url = (f"https://api.etrade.com/v1/accounts/"
+               f"{_session['account_id']}/orders/place")
+        resp = oauth.post(
+            url,
+            data=body,
+            headers={"Content-Type": "application/xml",
+                     "Accept": "application/json"},
+            timeout=20,
+        )
+        if resp.status_code == 401:
+            _session["_token_expired"] = True
+            raise Exception("Token expired — re-authenticate via UI")
+        if not resp.ok:
+            raise Exception(f"E*Trade {resp.status_code}: {resp.text[:300]}")
+        result   = resp.json()
         order_id = (result.get("PlaceOrderResponse", {})
                          .get("OrderIds", {}).get("orderId", "?"))
         with _pending_lock:
