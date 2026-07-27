@@ -321,18 +321,15 @@ def bot_pending_approve(action_id):
             raise Exception("Token expired — re-authenticate via UI")
         if not resp.ok:
             err_text = resp.text[:400]
-            # Code 101: E*Trade duplicate-order timeout — nudge price by $0.01
-            # to break content-based dedup, keep pending for immediate retry.
+            # Code 101: E*Trade internal dedup cache — wait 30-60 min, then retry.
             if "<code>101</code>" in err_text:
-                nudged = round(limit_price + 0.01, 2)
-                logger.warning(f"[CC] E*Trade 101 — nudging limit ${limit_price} → ${nudged} to break dedup cache")
+                logger.warning(f"[CC] E*Trade 101 — order cached internally, wait 30-60 min then retry")
                 with _pending_lock:
-                    action["status"]      = "pending"
-                    action["limit_price"] = nudged
+                    action["status"] = "pending"
                 return jsonify({
                     "success":   False,
-                    "error":     f"E*Trade flagged as duplicate (code 101). Limit price adjusted to ${nudged} — click Send again.",
-                    "retryable": True,
+                    "error":     "E*Trade has this order cached internally (code 101). Dismiss this card, wait 30–60 minutes, then click 'Sell CC' again to create a fresh order.",
+                    "retryable": False,
                     "action":    action,
                 }), 409
             raise Exception(f"E*Trade {resp.status_code}: {err_text}")

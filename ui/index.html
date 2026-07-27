@@ -1836,7 +1836,8 @@ function executeAction(ticker, action, pos){
     return;
   }
   if(action==='SELL_CC'){
-    const shares = (pos.contracts||0)*100 || (pos.shares||0);
+    // For STOCK positions, contracts field already equals share count (not option lots)
+    const shares = pos.shares || pos.contracts || 0;
     fetch(API+'/order/cc_prepare',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({ticker, cost:pos.cost||0, shares, current:pos.current||pos.cost||0})
     }).then(r=>r.json()).then(d=>{
