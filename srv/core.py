@@ -878,6 +878,7 @@ def _persist_poll(trigger: str, positions: list, account: dict):
     ]
     entry = {
         "ts":              ts,
+        "event":           "POLL",
         "trigger":         trigger,
         "account":         {
             "net_value":    account.get("net_value", 0),
