@@ -66,11 +66,11 @@ The wheel strategy is perfect for this because it's slow by design. You're selli
 
 - Live positions with wheel action recommendations (sell CSP, roll, assign, sell CC)
 - Options screener with ranked candidates
-- Greeks calculator with Ollama AI trade thesis
 - 3-year wheel projection with interactive sliders
 - **Backtest engine** — validate your exit rules against real historical data, with Ollama-powered analysis of the results
 - Ollama AI advisor for full portfolio analysis
 - **No account needed** — screener and backtest run on live market data (yfinance) without any E\*Trade login; positions and order flow use realistic demo data
+- **Greeks calculator** *(Pro)* — Black-Scholes Delta/Gamma/Theta/Vega/Rho, P&L heatmap, Theta decay chart — runs entirely in your browser, no E\*Trade account or market data subscription needed
 
 ![Screener results](screenshots/Wheel%20Screener%20results.png)
 
@@ -284,10 +284,24 @@ Here is exactly what works without logging in:
 | **Stock screener** | Full live run — Fisher Score, Wheel Score, IV, bid/ask, open interest, ranked candidates | yfinance (live market data) |
 | **Backtest engine** | Full historical simulation — any date range, any tickers, exit rule comparison, portfolio curve, Ollama analysis | yfinance (historical OHLCV) |
 | **3-year projection** | Interactive sliders, compound growth model | Your inputs |
-| **Greeks calculator** | Black-Scholes Delta/Gamma/Theta/Vega/Rho, P&L heatmap, Theta decay chart | Calculated locally |
 | **AI Advisor** | Full chat and portfolio analysis | Ollama (local) |
 
 The screener and backtest are not "demo" versions — they pull real, live market data from yfinance and run the same code that runs against a live account. The only thing missing is your real positions and buying power.
+
+### Want Greeks? Pro adds that — no E\*Trade account needed either.
+
+The **Greeks calculator** is a Pro plugin, but it has the same no-account requirement as everything else above — it runs entirely in your browser using Black-Scholes math. No E\*Trade login, no market data subscription, no cloud calls.
+
+| Feature | What you get | Tier |
+|---------|-------------|------|
+| **Greeks calculator** | Delta, Gamma, Theta, Vega, Rho — live as you move sliders | Pro |
+| **P&L heatmap** | Color-coded grid: stock price × DTE | Pro |
+| **Theta decay chart + 3 more live charts** | Delta profile, P&L at expiry, Vega × IV | Pro |
+| **17-strategy builder** | CSP, Covered Call, Iron Condor, Butterfly, Straddle & 12 more | Pro |
+| **Scenario table** | 9 price scenarios (±15%) with P&L now vs at expiry | Pro |
+| **Ollama AI trade thesis** | Plain-English win/kill conditions, Greeks verdict, wheel fit rating | Pro |
+
+> **Pro — $15/month** · [Sponsor on GitHub](https://github.com/sponsors/Hybridworksolutions) to unlock
 
 **What uses realistic demo data when you're not connected:**
 
