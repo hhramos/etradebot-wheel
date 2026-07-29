@@ -306,6 +306,7 @@ def record_nav_snapshot(nav: float, buying_power: float = 0,
 
 
 def record_trade_event(event: str, ticker: str = "", **kwargs) -> None:
+    ticker = ticker or ""
     ts = kwargs.pop("ts", datetime.datetime.now().isoformat())
     raw = {**kwargs, "event": event, "ticker": ticker, "ts": ts}
     with _LOCK:
