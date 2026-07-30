@@ -653,21 +653,23 @@ def query_report_card(lookback_days: int = 365) -> dict:
                 "cycles": 0, "net_pnl": 0.0, "wins": 0, "assignments": 0, "rolls": 0,
                 "outcomes": [], "csp_count": 0, "csp_net_premium": 0.0,
                 "cc_count": 0, "cc_net_premium": 0.0, "total_net_premium": 0.0,
-                "total_collateral": 0.0, "total_days": 0,
+                "total_collateral": 0.0, "total_days": 0, "total_contracts": 0,
             }
         s = stats[t]
 
         if tt == "CSP_SELL":
-            s["csp_count"]       += 1
-            s["csp_net_premium"] += pr * ct * 100
+            s["csp_count"]        += 1
+            s["csp_net_premium"]  += pr * ct * 100
             s["total_collateral"] += sk * ct * 100
+            s["total_contracts"]  += ct
         elif tt == "CSP_BTC":
-            s["csp_net_premium"] -= pr * ct * 100   # BTC is a debit
+            s["csp_net_premium"]  -= pr * ct * 100
         elif tt == "CC_SELL":
-            s["cc_count"]       += 1
-            s["cc_net_premium"] += pr * ct * 100
+            s["cc_count"]         += 1
+            s["cc_net_premium"]   += pr * ct * 100
+            s["total_contracts"]  += ct
         elif tt == "CC_BTC":
-            s["cc_net_premium"] -= pr * ct * 100
+            s["cc_net_premium"]   -= pr * ct * 100
         elif tt == "ASSIGNED":
             s["assignments"] += 1
 
@@ -680,13 +682,13 @@ def query_report_card(lookback_days: int = 365) -> dict:
         s["cc_net_premium"]    = round(s["cc_net_premium"], 2)
         s["total_net_premium"] = round(s["csp_net_premium"] + s["cc_net_premium"], 2)
         s["net_pnl"]           = s["total_net_premium"]
-        n = s["csp_count"] or 1
+        ct_total = s["total_contracts"] or 1
+        s["avg_per_contract"]  = round(s["total_net_premium"] / ct_total, 2)
         if s["total_collateral"] > 0:
-            s["annual_yield_pct"] = round(
-                s["total_net_premium"] / s["total_collateral"] * 100, 1
-            )
+            s["roc_pct"] = round(s["total_net_premium"] / s["total_collateral"] * 100, 1)
         else:
-            s["annual_yield_pct"] = 0.0
+            s["roc_pct"] = None   # — for CC-only tickers with no CSP collateral data
+        n = s["csp_count"] or 1
         s["win_rate"]    = 0.0
         s["assign_rate"] = round(s["assignments"] / n * 100, 1) if n else 0.0
 
