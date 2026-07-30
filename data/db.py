@@ -160,6 +160,21 @@ CREATE TABLE IF NOT EXISTS bot_runs (
 );
 
 CREATE INDEX IF NOT EXISTS idx_br_ts ON bot_runs(ts);
+
+CREATE TABLE IF NOT EXISTS option_trades (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    ts          TEXT    NOT NULL,           -- fill timestamp ISO
+    order_id    TEXT    UNIQUE,             -- E*Trade orderId — prevents duplicates on re-sync
+    ticker      TEXT    NOT NULL,
+    trade_type  TEXT    NOT NULL,           -- CSP_SELL | CSP_BTC | CC_SELL | CC_BTC | ASSIGNED
+    strike      REAL    DEFAULT NULL,
+    expiry      TEXT    DEFAULT NULL,
+    contracts   INTEGER DEFAULT 1,
+    premium     REAL    DEFAULT NULL        -- per-share; credit = positive, debit = negative
+);
+
+CREATE INDEX IF NOT EXISTS idx_ot_ticker ON option_trades(ticker);
+CREATE INDEX IF NOT EXISTS idx_ot_ts     ON option_trades(ts);
 """
 
 
@@ -584,6 +599,100 @@ def prune_old_rows() -> None:
 
 
 # ── Internal helpers ───────────────────────────────────────────────────────
+
+# ── Option trades (live E*Trade fills) ────────────────────────────────────
+
+def upsert_option_trade(row: dict) -> bool:
+    """Insert one E*Trade option fill. Returns True if new, False if duplicate."""
+    with _LOCK:
+        c = _conn()
+        try:
+            cur = c.execute(
+                "INSERT OR IGNORE INTO option_trades"
+                "(ts, order_id, ticker, trade_type, strike, expiry, contracts, premium)"
+                " VALUES(?,?,?,?,?,?,?,?)",
+                (
+                    row.get("ts", datetime.datetime.now().isoformat()),
+                    row.get("order_id"),
+                    row.get("ticker", ""),
+                    row.get("trade_type", ""),
+                    row.get("strike"),
+                    row.get("expiry"),
+                    row.get("contracts", 1),
+                    row.get("premium"),
+                ),
+            )
+            c.commit()
+            return cur.rowcount > 0
+        finally:
+            c.close()
+
+
+def query_report_card(lookback_days: int = 365) -> dict:
+    """
+    Aggregate option_trades into per-ticker Report Card stats.
+    Returns same dict shape as backtest per_ticker so renderWheelReportCard() is reused.
+    """
+    cutoff = (datetime.date.today() - datetime.timedelta(days=lookback_days)).isoformat()
+    with _conn() as c:
+        rows = c.execute(
+            "SELECT * FROM option_trades WHERE ts >= ? ORDER BY ts",
+            (cutoff,),
+        ).fetchall()
+
+    stats: dict[str, dict] = {}
+    for r in rows:
+        t  = r["ticker"]
+        tt = r["trade_type"]
+        pr = r["premium"] or 0.0
+        ct = r["contracts"] or 1
+        sk = r["strike"] or 0.0
+
+        if t not in stats:
+            stats[t] = {
+                "cycles": 0, "net_pnl": 0.0, "wins": 0, "assignments": 0, "rolls": 0,
+                "outcomes": [], "csp_count": 0, "csp_net_premium": 0.0,
+                "cc_count": 0, "cc_net_premium": 0.0, "total_net_premium": 0.0,
+                "total_collateral": 0.0, "total_days": 0,
+            }
+        s = stats[t]
+
+        if tt == "CSP_SELL":
+            s["csp_count"]       += 1
+            s["csp_net_premium"] += pr * ct * 100
+            s["total_collateral"] += sk * ct * 100
+        elif tt == "CSP_BTC":
+            s["csp_net_premium"] -= pr * ct * 100   # BTC is a debit
+        elif tt == "CC_SELL":
+            s["cc_count"]       += 1
+            s["cc_net_premium"] += pr * ct * 100
+        elif tt == "CC_BTC":
+            s["cc_net_premium"] -= pr * ct * 100
+        elif tt == "ASSIGNED":
+            s["assignments"] += 1
+
+    last_sync_row = None
+    if rows:
+        last_sync_row = rows[-1]["ts"]
+
+    for t, s in stats.items():
+        s["csp_net_premium"]   = round(s["csp_net_premium"], 2)
+        s["cc_net_premium"]    = round(s["cc_net_premium"], 2)
+        s["total_net_premium"] = round(s["csp_net_premium"] + s["cc_net_premium"], 2)
+        s["net_pnl"]           = s["total_net_premium"]
+        n = s["csp_count"] or 1
+        if s["total_collateral"] > 0:
+            s["annual_yield_pct"] = round(
+                s["total_net_premium"] / s["total_collateral"] * 100, 1
+            )
+        else:
+            s["annual_yield_pct"] = 0.0
+        s["win_rate"]    = 0.0
+        s["assign_rate"] = round(s["assignments"] / n * 100, 1) if n else 0.0
+
+    sorted_stats = dict(sorted(stats.items(), key=lambda x: -x[1]["total_net_premium"]))
+    return {"per_ticker": sorted_stats, "last_sync": last_sync_row, "total_fills": len(rows)}
+
 
 def _extract_summary(text: str, max_chars: int = 120) -> str:
     if not text:

@@ -197,6 +197,45 @@ button:hover{background:var(--bg2);color:var(--text)}
 <div class="wrap">
 
 
+<!-- Live Wheel Report Card (real E*Trade fills) -->
+<div class="panel" id="live-report-card-panel">
+  <div class="ph">
+    <div style="display:flex;align-items:center;gap:8px">
+      <i class="ti ti-report-analytics" style="color:var(--amber)"></i>
+      <div>Wheel Report Card — actual fills<div style="font-size:10px;font-weight:400;color:var(--text3);margin-top:2px">CSP &amp; CC history from your E*Trade account</div></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <span id="live-wrc-sync-ts" style="font-size:10px;color:var(--text3)">not synced</span>
+      <button id="live-wrc-btn" onclick="syncLiveReportCard()" style="font-size:11px;padding:4px 10px;border-radius:4px;background:var(--bg3);border:1px solid var(--border);color:var(--text);cursor:pointer">↻ Sync from E*Trade</button>
+    </div>
+  </div>
+  <div id="live-wrc-empty" style="padding:16px;font-size:11px;color:var(--text3);text-align:center">
+    Connect to E*Trade and click "Sync from E*Trade" to load your actual trade history.
+  </div>
+  <div class="wrc-section" id="live-wrc-section" style="display:none">
+    <div class="wrc-header">
+      <span style="color:var(--amber)">★</span>
+      Wheel Report Card — sorted by net total
+    </div>
+    <div style="overflow-x:auto">
+      <table class="wrc-table">
+        <thead><tr>
+          <th style="text-align:left;padding:7px 12px">Symbol</th>
+          <th style="text-align:right;padding:7px 8px"># CSP</th>
+          <th style="text-align:right;padding:7px 8px">Net CSP Premium</th>
+          <th style="text-align:right;padding:7px 8px">Assign</th>
+          <th style="text-align:right;padding:7px 8px"># CC</th>
+          <th style="text-align:right;padding:7px 8px">Net CC Premium</th>
+          <th style="text-align:right;padding:7px 8px">Net Total</th>
+          <th style="text-align:right;padding:7px 12px">Ann Yield %</th>
+        </tr></thead>
+        <tbody id="live-wrc-body"></tbody>
+        <tfoot id="live-wrc-foot"></tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+
 <!-- Forecast & Benchmarks table -->
 <div class="panel" id="forecast-panel">
   <div class="ph">
@@ -1011,6 +1050,7 @@ function renderLivePositions(positions, acct){
 // ─── Boot ─────────────────────────────────────────────────────────────────
 buildCalendar([],[],{});
 loadLiveData();
+loadLiveReportCard();
 setInterval(loadLiveData, 5 * 60 * 1000);
 checkProjOllama();
 
@@ -1165,10 +1205,13 @@ function checkBtStatus(){
     }).catch(()=>{});
 }
 
-function renderWheelReportCard(perTicker){
-  const card=document.getElementById('bt-report-card');
-  const body=document.getElementById('wrc-body');
-  const foot=document.getElementById('wrc-foot');
+function renderWheelReportCard(perTicker, cardId, bodyId, footId){
+  cardId = cardId||'bt-report-card';
+  bodyId = bodyId||'wrc-body';
+  footId = footId||'wrc-foot';
+  const card=document.getElementById(cardId);
+  const body=document.getElementById(bodyId);
+  const foot=document.getElementById(footId);
   if(!card||!perTicker)return;
   const entries=Object.entries(perTicker);
   if(!entries.length)return;
@@ -1216,6 +1259,49 @@ function renderWheelReportCard(perTicker){
     <td><span class="yield-badge ${pyCls}">${portYield.toFixed(1)}%</span></td>
   </tr>`;
   card.style.display='';
+}
+
+// ─── Live Report Card (real E*Trade fills) ────────────────────────────────
+async function loadLiveReportCard(){
+  try{
+    const resp=await fetch(API+'/trades/report_card');
+    const d=await resp.json();
+    if(d.error||!d.per_ticker||!Object.keys(d.per_ticker).length){
+      document.getElementById('live-wrc-empty').style.display='block';
+      document.getElementById('live-wrc-section').style.display='none';
+      return;
+    }
+    document.getElementById('live-wrc-empty').style.display='none';
+    document.getElementById('live-wrc-section').style.display='';
+    renderWheelReportCard(d.per_ticker,'live-wrc-section','live-wrc-body','live-wrc-foot');
+    if(d.last_sync){
+      document.getElementById('live-wrc-sync-ts').textContent=
+        'synced '+d.last_sync.replace('T',' ').slice(0,16);
+    }
+  }catch(e){}
+}
+
+async function syncLiveReportCard(){
+  const btn=document.getElementById('live-wrc-btn');
+  if(btn){btn.disabled=true;btn.textContent='Syncing…';}
+  try{
+    const resp=await fetch(API+'/trades/sync');
+    const d=await resp.json();
+    const ts=new Date().toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
+    if(btn){
+      btn.disabled=false;
+      btn.textContent='↻ Sync from E*Trade';
+    }
+    if(d.error){
+      document.getElementById('live-wrc-sync-ts').textContent='sync error: '+d.error.slice(0,40);
+      return;
+    }
+    document.getElementById('live-wrc-sync-ts').textContent=
+      'synced '+ts+' ('+d.synced+' new fills)';
+    await loadLiveReportCard();
+  }catch(e){
+    if(btn){btn.disabled=false;btn.textContent='↻ Sync from E*Trade';}
+  }
 }
 
 function renderBtResults(r){
