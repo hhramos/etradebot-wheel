@@ -227,7 +227,8 @@ button:hover{background:var(--bg2);color:var(--text)}
           <th style="text-align:right;padding:7px 8px"># CC</th>
           <th style="text-align:right;padding:7px 8px">Net CC Premium</th>
           <th style="text-align:right;padding:7px 8px">Net Total</th>
-          <th style="text-align:right;padding:7px 12px">Ann Yield %</th>
+          <th style="text-align:right;padding:7px 8px">Avg $/Contract</th>
+          <th style="text-align:right;padding:7px 12px">ROC %</th>
         </tr></thead>
         <tbody id="live-wrc-body"></tbody>
         <tfoot id="live-wrc-foot"></tfoot>
@@ -358,7 +359,8 @@ button:hover{background:var(--bg2);color:var(--text)}
             <th data-col="cc_count"># CC</th>
             <th data-col="cc_net">Net CC Premium</th>
             <th data-col="total_net">Net Total</th>
-            <th data-col="yield">Ann Yield %</th>
+            <th data-col="avg_per_contract">Avg $/Contract</th>
+            <th data-col="roc">ROC %</th>
           </tr></thead>
           <tbody id="wrc-body"></tbody>
           <tfoot id="wrc-foot"></tfoot>
@@ -1218,20 +1220,28 @@ function renderWheelReportCard(perTicker, cardId, bodyId, footId){
 
   entries.sort((a,b)=>(b[1].total_net_premium||0)-(a[1].total_net_premium||0));
 
-  let tCSP=0,tCSPnet=0,tAssign=0,tCC=0,tCCnet=0,tNet=0;
+  let tCSP=0,tCSPnet=0,tAssign=0,tCC=0,tCCnet=0,tNet=0,tColl=0,tContracts=0;
   const fmt=v=>(v>=0?'':'-')+'$'+Math.abs(v).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+  const fmtC=v=>(v>=0?'':'-')+'$'+Math.abs(v).toFixed(2);
   const cls=v=>v>=0?'pos':'neg';
+  const rocCls=v=>v>=15?'yield-high':v>=6?'yield-mid':'yield-low';
 
   const rows=entries.map(([sym,s])=>{
-    const cspN  =s.csp_count||s.cycles||0;
-    const cspNet=s.csp_net_premium||0;
-    const assign=s.assignments||0;
-    const ccN   =s.cc_count||0;
-    const ccNet =s.cc_net_premium||0;
-    const net   =s.total_net_premium||(cspNet+ccNet);
-    const yld   =s.annual_yield_pct||0;
+    const cspN    =s.csp_count||s.cycles||0;
+    const cspNet  =s.csp_net_premium||0;
+    const assign  =s.assignments||0;
+    const ccN     =s.cc_count||0;
+    const ccNet   =s.cc_net_premium||0;
+    const net     =s.total_net_premium||(cspNet+ccNet);
+    const coll    =s.total_collateral||0;
+    const totalCt =s.total_contracts||(cspN+ccN)||1;
+    const avgPerCt=totalCt>0?net/totalCt:0;
+    const roc     =coll>0?net/coll*100:null;
     tCSP+=cspN;tCSPnet+=cspNet;tAssign+=assign;tCC+=ccN;tCCnet+=ccNet;tNet+=net;
-    const yCls=yld>=12?'yield-high':yld>=6?'yield-mid':'yield-low';
+    tColl+=coll;tContracts+=totalCt;
+    const rocCell=roc!=null
+      ? `<span class="yield-badge ${rocCls(roc)}">${roc.toFixed(1)}%</span>`
+      : `<span style="color:var(--text3)">—</span>`;
     return `<tr>
       <td>${sym}</td><td>${cspN}</td>
       <td class="${cls(cspNet)}">${fmt(cspNet)}</td>
@@ -1239,15 +1249,16 @@ function renderWheelReportCard(perTicker, cardId, bodyId, footId){
       <td>${ccN}</td>
       <td class="${cls(ccNet)}">${fmt(ccNet)}</td>
       <td class="${cls(net)}">${fmt(net)}</td>
-      <td><span class="yield-badge ${yCls}">${yld.toFixed(1)}%</span></td>
+      <td class="${cls(avgPerCt)}">${fmtC(avgPerCt)}</td>
+      <td>${rocCell}</td>
     </tr>`;
   }).join('');
 
-  const totalColl=entries.reduce((a,[,v])=>a+(v.total_collateral||0),0);
-  const totalDays=entries.reduce((a,[,v])=>a+(v.total_days||0),0);
-  const avgDays=tCSP>0?totalDays/tCSP:30;
-  const portYield=totalColl>0?(tNet/totalColl)*(365/avgDays)*100:0;
-  const pyCls=portYield>=12?'yield-high':portYield>=6?'yield-mid':'yield-low';
+  const portAvgCt=tContracts>0?tNet/tContracts:0;
+  const portRoc  =tColl>0?tNet/tColl*100:null;
+  const portRocCell=portRoc!=null
+    ? `<span class="yield-badge ${rocCls(portRoc)}">${portRoc.toFixed(1)}%</span>`
+    : `<span style="color:var(--text3)">—</span>`;
 
   body.innerHTML=rows;
   foot.innerHTML=`<tr>
@@ -1256,7 +1267,8 @@ function renderWheelReportCard(perTicker, cardId, bodyId, footId){
     <td>${tAssign}</td><td>${tCC}</td>
     <td class="${cls(tCCnet)}">${fmt(tCCnet)}</td>
     <td class="${cls(tNet)}">${fmt(tNet)}</td>
-    <td><span class="yield-badge ${pyCls}">${portYield.toFixed(1)}%</span></td>
+    <td class="${cls(portAvgCt)}">${fmtC(portAvgCt)}</td>
+    <td>${portRocCell}</td>
   </tr>`;
   card.style.display='';
 }
