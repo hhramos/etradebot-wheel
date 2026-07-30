@@ -168,6 +168,21 @@ button:hover{background:var(--bg2);color:var(--text)}
   font-size:10px;color:var(--text3);border-bottom:0.5px solid var(--border)}
 .bt-run-summary.show{display:flex}
 .bt-run-summary i{color:var(--green-text)}
+/* Wheel Report Card */
+.wrc-section{border-top:0.5px solid var(--border)}
+.wrc-header{display:flex;align-items:center;gap:7px;padding:9px 16px;background:var(--bg3);border-bottom:0.5px solid var(--border);font-size:12px;font-weight:500}
+.wrc-table{width:100%;border-collapse:collapse;font-size:12px}
+.wrc-table th{padding:7px 10px;font-size:10px;font-weight:500;color:var(--text3);background:var(--bg3);border-bottom:0.5px solid var(--border);text-align:right;cursor:pointer;white-space:nowrap}
+.wrc-table th:first-child{text-align:left}
+.wrc-table td{padding:7px 10px;border-bottom:0.5px solid var(--border);font-family:var(--mono);font-size:12px;text-align:right}
+.wrc-table td:first-child{text-align:left;font-family:var(--sans);font-weight:500;color:var(--text2)}
+.wrc-table tbody tr:hover td{background:rgba(75,142,255,0.04)}
+.wrc-table tfoot td{padding:9px 10px;font-weight:600;border-top:1px solid var(--border2);background:var(--bg3)}
+.wrc-table .pos{color:var(--green)}.wrc-table .neg{color:var(--red)}
+.wrc-table .yield-badge{display:inline-block;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:500}
+.wrc-table .yield-high{background:var(--green-dim);color:var(--green)}
+.wrc-table .yield-mid{background:var(--blue-dim);color:var(--blue)}
+.wrc-table .yield-low{background:var(--red-dim);color:var(--red)}
 </style>
 </head>
 <body>
@@ -293,6 +308,30 @@ button:hover{background:var(--bg2);color:var(--text)}
          style="font-size:11px;color:var(--purple);text-decoration:none">
         <i class="ti ti-external-link"></i> Open full report
       </a>
+    </div>
+    <!-- Wheel Report Card -->
+    <div class="wrc-section" id="bt-report-card" style="display:none">
+      <div class="wrc-header">
+        <span style="color:var(--amber)">★</span>
+        <span>Wheel Report Card</span>
+        <span id="wrc-sort-label" style="font-size:10px;color:var(--text3);font-weight:400;margin-left:auto">sorted by net total ▼</span>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="wrc-table">
+          <thead><tr>
+            <th style="text-align:left" data-col="symbol">Symbol</th>
+            <th data-col="csp_count"># CSP</th>
+            <th data-col="csp_net">Net CSP Premium</th>
+            <th data-col="assignments">Assign</th>
+            <th data-col="cc_count"># CC</th>
+            <th data-col="cc_net">Net CC Premium</th>
+            <th data-col="total_net">Net Total</th>
+            <th data-col="yield">Ann Yield %</th>
+          </tr></thead>
+          <tbody id="wrc-body"></tbody>
+          <tfoot id="wrc-foot"></tfoot>
+        </table>
+      </div>
     </div>
     <!-- KPIs -->
     <div class="bt-kpi-grid" id="bt-kpis"></div>
@@ -1259,6 +1298,59 @@ function checkBtStatus(){
     }).catch(()=>{});
 }
 
+function renderWheelReportCard(perTicker){
+  const card=document.getElementById('bt-report-card');
+  const body=document.getElementById('wrc-body');
+  const foot=document.getElementById('wrc-foot');
+  if(!card||!perTicker)return;
+  const entries=Object.entries(perTicker);
+  if(!entries.length)return;
+
+  entries.sort((a,b)=>(b[1].total_net_premium||0)-(a[1].total_net_premium||0));
+
+  let tCSP=0,tCSPnet=0,tAssign=0,tCC=0,tCCnet=0,tNet=0;
+  const fmt=v=>(v>=0?'':'-')+'$'+Math.abs(v).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+  const cls=v=>v>=0?'pos':'neg';
+
+  const rows=entries.map(([sym,s])=>{
+    const cspN  =s.csp_count||s.cycles||0;
+    const cspNet=s.csp_net_premium||0;
+    const assign=s.assignments||0;
+    const ccN   =s.cc_count||0;
+    const ccNet =s.cc_net_premium||0;
+    const net   =s.total_net_premium||(cspNet+ccNet);
+    const yld   =s.annual_yield_pct||0;
+    tCSP+=cspN;tCSPnet+=cspNet;tAssign+=assign;tCC+=ccN;tCCnet+=ccNet;tNet+=net;
+    const yCls=yld>=12?'yield-high':yld>=6?'yield-mid':'yield-low';
+    return `<tr>
+      <td>${sym}</td><td>${cspN}</td>
+      <td class="${cls(cspNet)}">${fmt(cspNet)}</td>
+      <td style="color:var(--text2)">${assign}</td>
+      <td>${ccN}</td>
+      <td class="${cls(ccNet)}">${fmt(ccNet)}</td>
+      <td class="${cls(net)}">${fmt(net)}</td>
+      <td><span class="yield-badge ${yCls}">${yld.toFixed(1)}%</span></td>
+    </tr>`;
+  }).join('');
+
+  const totalColl=entries.reduce((a,[,v])=>a+(v.total_collateral||0),0);
+  const totalDays=entries.reduce((a,[,v])=>a+(v.total_days||0),0);
+  const avgDays=tCSP>0?totalDays/tCSP:30;
+  const portYield=totalColl>0?(tNet/totalColl)*(365/avgDays)*100:0;
+  const pyCls=portYield>=12?'yield-high':portYield>=6?'yield-mid':'yield-low';
+
+  body.innerHTML=rows;
+  foot.innerHTML=`<tr>
+    <td>TOTAL</td><td>${tCSP}</td>
+    <td class="${cls(tCSPnet)}">${fmt(tCSPnet)}</td>
+    <td>${tAssign}</td><td>${tCC}</td>
+    <td class="${cls(tCCnet)}">${fmt(tCCnet)}</td>
+    <td class="${cls(tNet)}">${fmt(tNet)}</td>
+    <td><span class="yield-badge ${pyCls}">${portYield.toFixed(1)}%</span></td>
+  </tr>`;
+  card.style.display='';
+}
+
 function renderBtResults(r){
   document.getElementById('bt-progress-section').style.display='none';
   document.getElementById('bt-config-section').style.display='none';
@@ -1352,6 +1444,9 @@ function renderBtResults(r){
         </div>`;
       }).join('');
   }
+
+  // Wheel Report Card
+  renderWheelReportCard(r.per_ticker);
 
   // Load context for strip + preview
   loadBtContext();
@@ -1648,6 +1743,7 @@ function resetBacktest(){
   document.getElementById('bt-kpis').innerHTML='';
   var btc=document.getElementById('bt-compare');if(btc)btc.style.display='none';
   var bts=document.getElementById('bt-ticker-summary');if(bts)bts.innerHTML='';
+  var wrc=document.getElementById('bt-report-card');if(wrc)wrc.style.display='none';
   document.getElementById('bt-status-pill').textContent='not run';
   document.getElementById('bt-status-pill').style.background='var(--bg3)';
   document.getElementById('bt-status-pill').style.color='var(--text3)';
