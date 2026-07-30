@@ -297,6 +297,10 @@ class BacktestLedger:
                     "cycles": 0, "net_pnl": 0.0, "premium": 0.0,
                     "wins": 0, "assignments": 0, "rolls": 0,
                     "outcomes": [],
+                    "csp_count": 0, "csp_net_premium": 0.0,
+                    "cc_count": 0, "cc_net_premium": 0.0,
+                    "total_net_premium": 0.0,
+                    "total_collateral": 0.0, "total_days": 0,
                 }
             s = stats[t]
             s["cycles"]   += 1
@@ -308,13 +312,36 @@ class BacktestLedger:
                 s["wins"] += 1
             if c.assigned:
                 s["assignments"] += 1
+
+            # Report Card fields
+            csp_credit = c.csp_premium * c.csp_contracts * 100
+            btc_debit  = c.btc_cost    * c.csp_contracts * 100
+            s["csp_count"]       += 1
+            s["csp_net_premium"] += csp_credit - btc_debit
+            if c.cc_strike > 0:
+                s["cc_count"]      += 1
+                s["cc_net_premium"] += c.cc_premium * c.cc_contracts * 100
+            s["total_collateral"] += c.csp_strike * c.csp_contracts * 100
+            if c.end_date and c.start_date:
+                s["total_days"] += (c.end_date - c.start_date).days
+
         for t, s in stats.items():
             n = s["cycles"]
-            s["net_pnl"]      = round(s["net_pnl"], 2)
-            s["premium"]      = round(s["premium"], 2)
-            s["win_rate"]     = round(s["wins"] / n * 100, 1) if n else 0
-            s["assign_rate"]  = round(s["assignments"] / n * 100, 1) if n else 0
-        return dict(sorted(stats.items(), key=lambda x: -x[1]["net_pnl"]))
+            s["net_pnl"]           = round(s["net_pnl"], 2)
+            s["premium"]           = round(s["premium"], 2)
+            s["win_rate"]          = round(s["wins"] / n * 100, 1) if n else 0
+            s["assign_rate"]       = round(s["assignments"] / n * 100, 1) if n else 0
+            s["csp_net_premium"]   = round(s["csp_net_premium"], 2)
+            s["cc_net_premium"]    = round(s["cc_net_premium"], 2)
+            s["total_net_premium"] = round(s["csp_net_premium"] + s["cc_net_premium"], 2)
+            if s["total_collateral"] > 0 and s["total_days"] > 0:
+                avg_days = s["total_days"] / s["csp_count"]
+                raw      = s["total_net_premium"] / s["total_collateral"]
+                s["annual_yield_pct"] = round(raw * (365 / avg_days) * 100, 1)
+            else:
+                s["annual_yield_pct"] = 0.0
+
+        return dict(sorted(stats.items(), key=lambda x: -x[1]["total_net_premium"]))
 
     def monthly_income(self) -> dict:
         """Aggregate net P&L by calendar month (YYYY-MM)."""

@@ -79,13 +79,7 @@ def bot_projection_data():
         except Exception as e:
             logger.warning("projection wheel_state read: %s", e)
 
-    # Reinvestment log (last 15 events from SQLite)
-    reinvest_log = []
-    try:
-        from data import db as _db
-        reinvest_log = _db.query_reinvest_log(limit=15)
-    except Exception:
-        pass
+
 
     # Universe tiers
     universe = {}
@@ -108,7 +102,6 @@ def bot_projection_data():
         "positions":     positions,
         "screener":      screener,
         "wheel_state":   wheel_stats,
-        "reinvest_log":  reinvest_log,
         "universe_tiers": universe,
     })
 
