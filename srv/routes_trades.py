@@ -91,29 +91,29 @@ def trades_sync():
 
     from data import db as _db
 
+    account_id = _session.get("account_id", "")
+    from_date  = (datetime.date.today() - datetime.timedelta(days=90)).strftime("%m%d%Y")
+    to_date    = datetime.date.today().strftime("%m%d%Y")
+
     try:
-        import pyetrade
-        api = pyetrade.ETradeOrder(
+        from requests_oauthlib import OAuth1Session
+        sess = OAuth1Session(
             _session["consumer_key"],
-            _session["consumer_secret"],
-            _session["access_token"],
-            _session["access_token_secret"],
-            dev=False,
+            client_secret         = _session["consumer_secret"],
+            resource_owner_key    = _session["access_token"],
+            resource_owner_secret = _session["access_token_secret"],
         )
-        account_id = _session.get("account_id", "")
-
-        # Fetch last 90 days of executed option orders
-        from_date = (datetime.date.today() - datetime.timedelta(days=90)).strftime("%m%d%Y")
-        to_date   = datetime.date.today().strftime("%m%d%Y")
-
-        resp = api.list_orders(
-            account=account_id,
-            resp_format="json",
-            status="EXECUTED",
-            fromDate=from_date,
-            toDate=to_date,
-            securityType="OPTN",
+        url = (
+            f"https://api.etrade.com/v1/accounts/{account_id}/orders"
+            f"?status=EXECUTED&fromDate={from_date}&toDate={to_date}"
+            f"&securityType=OPTN&count=100"
         )
+        r = sess.get(url, headers={"Accept": "application/json"}, timeout=30)
+        if r.status_code == 401:
+            _session["_token_expired"] = True
+            return jsonify({"error": "Token expired — re-authenticate"}), 401
+        r.raise_for_status()
+        resp = r.json()
     except Exception as e:
         logger.warning("trades/sync E*Trade call failed: %s", e)
         return jsonify({"error": str(e)}), 500
@@ -125,6 +125,8 @@ def trades_sync():
         )
         if isinstance(order_list, dict):
             order_list = [order_list]
+        if not order_list:
+            order_list = []
     except Exception:
         order_list = []
 
@@ -149,6 +151,8 @@ def trades_report_card():
     """Return per-ticker Report Card stats from local SQLite option_trades."""
     try:
         from data import db as _db
+        # Ensure table exists (idempotent — safe on every request)
+        _db.init_db()
         result = _db.query_report_card(lookback_days=365)
         return jsonify(result)
     except Exception as e:
