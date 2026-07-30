@@ -118,13 +118,6 @@ button:hover{background:var(--bg2);color:var(--text)}
 .cal-order{font-size:10px;padding:3px 6px;border-radius:3px;margin-bottom:3px;display:flex;justify-content:space-between;align-items:center;font-family:var(--mono)}
 .cal-order.csp{background:var(--blue-dim);color:var(--blue-text)}.cal-order.btc{background:var(--red-dim);color:var(--red-text)}.cal-order.cc{background:var(--green-dim);color:var(--green-text)}.cal-order.reinvest{background:var(--teal-dim);color:var(--teal)}.cal-order.stock{background:var(--bg3);color:var(--text2)}
 .cal-total{font-size:10px;display:flex;justify-content:space-between;margin-top:6px;padding-top:5px;border-top:0.5px solid var(--border);color:var(--text3)}
-/* Reinvestment log */
-.rlog-entry{padding:8px 12px;border-bottom:0.5px solid var(--border);font-size:11px}
-.rlog-entry:last-child{border-bottom:none}
-.rlog-ts{font-size:10px;color:var(--text3);font-family:var(--mono);margin-bottom:3px}
-.rlog-main{color:var(--text);margin-bottom:2px}
-.rlog-reason{font-size:10px;color:var(--text3);padding:2px 6px;background:var(--bg3);border-radius:3px;margin-top:3px;display:inline-block}
-.rlog-profit{color:var(--green-text);font-family:var(--mono);font-weight:500}
 /* Break-even timeline */
 .be-track{position:relative;height:32px;background:var(--bg3);border-radius:4px;overflow:hidden;margin:12px 0}
 .be-fill-a{position:absolute;left:0;top:0;height:100%;background:var(--blue-dim);border-right:1px dashed var(--blue)}
@@ -518,23 +511,11 @@ button:hover{background:var(--bg2);color:var(--text)}
   <div class="pb" id="calendar-wrap"></div>
 </div>
 
-<div class="two-col">
-
-<!-- Reinvestment decision log -->
-<div class="panel">
-  <div class="ph"><i class="ti ti-arrows-exchange"></i> Reinvestment log — last bot decisions</div>
-  <div id="reinvest-log-wrap">
-    <div style="padding:16px;font-size:11px;color:var(--text3);text-align:center">
-      Bot has not run yet — log will appear after first monitoring cycle.
-    </div>
-  </div>
-</div>
-
 <!-- Risk summary -->
 <div class="panel">
   <div class="ph"><i class="ti ti-shield"></i> Risk summary</div>
   <div class="pb">
-    <div class="risk-grid" style="grid-template-columns:1fr 1fr">
+    <div class="risk-grid">
       <div class="risk-card risk-low"><div class="risk-title"><i class="ti ti-check"></i>A — lowest risk</div>Flat capital, income only. No compounding. No margin. Suitable for conservative accounts or initial testing phase.</div>
       <div class="risk-card risk-med"><div class="risk-title"><i class="ti ti-alert-triangle"></i>B — moderate</div>Concentration risk as contracts scale. Same-stock reinvestment limits diversification. Monthly screener rebalance recommended.</div>
       <div class="risk-card risk-hi"><div class="risk-title"><i class="ti ti-flame"></i>C — elevated</div>Cross-ticker reinvestment adds execution complexity. Quality thresholds prevent chasing low-grade stocks. Capital efficiency gain ~12% over B.</div>
@@ -542,8 +523,6 @@ button:hover{background:var(--bg2);color:var(--text)}
     </div>
   </div>
 </div>
-
-</div><!-- /two-col -->
 
 </div><!-- /wrap -->
 <script>
@@ -895,116 +874,6 @@ function buildCalendar(positions, screenerCandidates, wheelState){
     '</div>';
 }
 
-// ─── Reinvestment log ─────────────────────────────────────────────────────
-function renderReinvestLog(log){
-  if(!log||!log.length){
-    document.getElementById('reinvest-log-wrap').innerHTML=
-      '<div style="padding:16px;font-size:11px;color:var(--text3);text-align:center">'+
-      'Bot has not run yet — log will appear after first monitoring cycle.</div>';
-    return;
-  }
-  document.getElementById('reinvest-log-wrap').innerHTML=log.map(e=>{
-    const ev     = e.event||'';
-    const ticker = e.ticker||'';
-    const ts     = (e.ts||'').replace('T',' ').slice(0,16);
-    let main='', reason='', icon='', color='var(--text2)';
-
-    if(ev==='CYCLE_COMPLETE'){
-      const profit = e.profit||e.cycle_pnl||0;
-      icon='ti-check'; color='var(--green-text)';
-      main=`${ticker} cycle complete — <span class="rlog-profit">+$${profit}</span>`;
-      reason=e.type||'';
-
-    } else if(ev==='QUEUED_EXIT'){
-      icon='ti-clock'; color='var(--amber-text)';
-      const strike = e.strike ? ` $${e.strike}` : '';
-      const expiry = e.expiry ? ` ${e.expiry}` : '';
-      main=`${ticker} BTC queued${strike}${expiry} — <span style="font-size:10px;color:var(--amber-text)">${e.mode||'dry_run'}</span>`;
-      reason=e.reason||'';
-
-    } else if(ev==='QUEUED_ENTRY'){
-      icon='ti-clock'; color='var(--blue-text)';
-      const strike = e.strike ? ` $${e.strike}` : '';
-      const expiry = e.expiry ? ` ${e.expiry}` : '';
-      main=`${ticker} CSP entry queued${strike}${expiry}`;
-      reason=e.reason||'';
-
-    } else if(ev==='EXIT_PLACED'){
-      icon='ti-send'; color='var(--green-text)';
-      main=`${ticker} BTC order placed → #${e.order_id||'?'}`;
-      reason=e.reason||'';
-
-    } else if(ev==='CSP_FILLED'){
-      icon='ti-circle-check'; color='var(--blue-text)';
-      main=`${ticker} CSP filled @ $${e.premium||'?'}`;
-      reason='';
-
-    } else if(ev==='REINVEST_DECISION'){
-      const w=e.winner||{};
-      icon='ti-arrows-exchange'; color='var(--teal)';
-      main=`Reinvest $${e.freed_capital||'?'} → <strong style="color:var(--teal)">`+
-           `${w.ticker||'?'}</strong> ${w.contracts||1}c`;
-      reason=w.reason||'';
-
-    } else if(ev==='ASSIGNED'){
-      icon='ti-arrow-down-circle'; color='var(--blue-text)';
-      main=`${ticker} assigned — ${e.shares||100}sh @ cost basis $${e.cost_basis||'?'}`;
-
-    } else if(ev==='CALLED_AWAY'){
-      icon='ti-arrow-up-circle'; color='var(--purple)';
-      main=`${ticker} called away — cycle P&L `+
-           `<span class="rlog-profit">$${e.cycle_pnl||'?'}</span>`;
-
-    } else if(ev==='CC_ORDER_PREPARED'){
-      const a=e.action||{};
-      icon='ti-file-invoice'; color='var(--amber-text)';
-      main=`CC prepared: ${a.ticker||ticker} $${a.strike||'?'}C `+
-           `${a.expiry||''} ×${a.contracts||1}c @ $${a.limit_price||'?'} `+
-           `<span style="font-size:9px;color:var(--text3)">[${a.source||'auto'}]</span>`;
-      reason=a.reasoning||'';
-
-    } else if(ev==='CC_ORDER_SUBMITTED'){
-      icon='ti-send'; color='var(--green-text)';
-      main=`CC submitted: ${e.ticker||ticker} → order #${e.order_id||'?'}`;
-
-    } else if(ev==='ROLL_EXECUTED'){
-      icon='ti-arrows-up-down'; color='var(--red-text)';
-      const net=e.net_credit||0;
-      main=`Rolled ${e.ticker||ticker} $${e.cur_strike||'?'} → `+
-           `$${e.new_strike||'?'} ${e.new_expiry||''} `+
-           `<span style="color:${net>=0?'var(--green-text)':'var(--red-text)'};">`+
-           `${net>=0?'+':''}$${net} ${net>=0?'credit':'debit'}</span>`;
-
-    } else if(ev==='POLL'){
-      icon='ti-radar'; color='var(--text3)';
-      const alerts=e.alerts||e.alert_summary||'';
-      main=`Monitor check — ${e.position_count||e.positions||'?'} positions`+
-           (alerts?` · <span style="color:var(--amber-text)">${alerts}</span>`:'');
-
-    } else if(ev==='DAILY_SUMMARY'){
-      icon='ti-chart-bar'; color='var(--blue-text)';
-      const nav0 = e.nav_open||e.nav_start||0;
-      const nav1 = e.nav_close||e.nav_end||0;
-      const diff = nav1&&nav0?'+$'+(nav1-nav0).toFixed(2):'';
-      main=`Daily close: NAV $${nav1||'?'} ${diff} · ${e.polls||e.poll_count||'?'} polls`;
-
-    } else {
-      icon='ti-info-circle'; color='var(--text3)';
-      main=`${ev}${ticker?' · '+ticker:''}`;
-    }
-
-    return `<div class="rlog-entry">
-      <div class="rlog-ts">
-        <i class="ti ${icon}" style="font-size:10px;color:${color};margin-right:4px"></i>
-        ${ts}
-      </div>
-      <div class="rlog-main">${main}</div>
-      ${reason?`<div class="rlog-reason">${String(reason).slice(0,120)}</div>`:''}
-    </div>`;
-  }).join('');
-}
-
-
 function applyScreenerData(candidates){
   liveScreener=candidates;
   PICKS=liveScreener.slice(0,8).map(function(c,i){return {
@@ -1056,8 +925,6 @@ async function loadLiveData(){
         document.getElementById('stat-premium').textContent='$'+(ws.lifetime_premium||0).toLocaleString();
         document.getElementById('stat-wheels').textContent=(ws.active_wheels||0)+'/10';
       }
-      // Reinvest log
-      if(res.reinvest_log) renderReinvestLog(res.reinvest_log);
       // Universe tiers → enrich PICKS with tier
       if(res.universe_tiers){
         liveUniverse=res.universe_tiers;
