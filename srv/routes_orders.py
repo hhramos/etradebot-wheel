@@ -39,7 +39,9 @@ def order_submit():
     strike      = float(order.get("strike", 0))
     expiry      = order.get("expiry","")
     contracts   = int(order.get("contracts", 1))
-    limit_price = float(order.get("limit_price", 0))
+    limit_price    = float(order.get("limit_price", 0))
+    price_type_raw = order.get("price_type", "LIMIT").upper()
+    price_type     = "MARKET" if price_type_raw == "MARKET" else "LIMIT"
     _TIF_MAP    = {"GTC": "GOOD_UNTIL_CANCEL", "DAY": "GOOD_FOR_DAY",
                    "IOC": "IMMEDIATE_OR_CANCEL", "FOK": "FILL_OR_KILL"}
     tif_raw  = order.get("tif", "DAY").upper()
@@ -60,17 +62,19 @@ def order_submit():
         """Build the XML order body. root_tag should be PreviewOrderRequest for
         the preview step and PlaceOrderRequest for the place step."""
         term = order_term_override or tif
+        if price_type == "MARKET":
+            price_block = "    <priceType>MARKET</priceType>\n    <stopPrice/>"
+        else:
+            price_block = f"    <priceType>LIMIT</priceType>\n    <stopPrice/>\n    <limitPrice>{limit_price:.2f}</limitPrice>"
         return f"""<?xml version="1.0" encoding="utf-8"?>
 <{root_tag}>
   <orderType>OPTN</orderType>
   <clientOrderId>{client_id}</clientOrderId>
   <Order>
     <allOrNone>false</allOrNone>
-    <priceType>LIMIT</priceType>
+{price_block}
     <orderTerm>{term}</orderTerm>
     <marketSession>REGULAR</marketSession>
-    <stopPrice/>
-    <limitPrice>{limit_price:.2f}</limitPrice>
     <Instrument>
       <Product>
         <securityType>OPTN</securityType>
@@ -195,8 +199,9 @@ def order_submit():
         else:
             ids = {}
         order_id = ids.get("orderId") or ids.get("OrderId") or "?"
+        price_label = "MARKET" if price_type == "MARKET" else f"${limit_price}"
         logger.info(f"Order placed: {action} {ticker} {option_type} "
-                    f"${strike} {expiry} ×{contracts}c @ ${limit_price} {tif} → #{order_id}")
+                    f"${strike} {expiry} ×{contracts}c @ {price_label} {tif} → #{order_id}")
         return jsonify({"success": True, "order_id": str(order_id), "result": result})
 
     except Exception as e:

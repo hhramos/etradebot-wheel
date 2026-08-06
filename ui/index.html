@@ -392,6 +392,11 @@ code{font-family:var(--mono);font-size:11px;background:var(--bg3);padding:1px 5p
 .custom-warn.amber{background:var(--amber-dim);color:var(--amber-text);border:0.5px solid var(--amber)}
 .custom-warn.green{background:var(--green-dim);color:var(--green-text);border:0.5px solid var(--green)}
 .custom-loading{color:var(--text3);font-size:12px;display:flex;align-items:center;gap:8px;padding:10px 0}
+.of-input{font-family:var(--mono);font-size:13px;font-weight:500;background:var(--bg3);border:0.5px solid var(--border2);border-radius:var(--radius);padding:2px 6px;width:110px;color:var(--text);text-align:right}
+.of-input:focus{outline:none;border-color:var(--purple)}
+.of-input.blue{color:var(--blue-text)}.of-input.green{color:var(--green-text)}
+.act-btn-sec.sec-mkt{color:var(--red-text);border-color:var(--red-dim)}
+.act-btn-sec.sec-mkt:hover{background:var(--red-dim)}
 .pick-tabs{display:flex;gap:6px;margin-bottom:12px}
 .pick-tab{display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:var(--radius);font-size:12px;border:0.5px solid var(--border2);background:var(--bg3);color:var(--text2);cursor:pointer;transition:all .15s}
 .pick-tab:hover{background:var(--bg2);color:var(--text)}
@@ -968,9 +973,10 @@ code{font-family:var(--mono);font-size:11px;background:var(--bg3);padding:1px 5p
           <div class="order-field"><span class="of-label">Symbol</span><span class="of-val blue" id="cf-ticker">—</span></div>
           <div class="order-field"><span class="of-label">Action</span><span class="of-val">Sell to open · put</span></div>
           <div class="order-field"><span class="of-label">Price/share</span><span class="of-val" id="cf-price">—</span></div>
-          <div class="order-field"><span class="of-label">Strike</span><span class="of-val blue" id="cf-strike">—</span></div>
-          <div class="order-field"><span class="of-label">Expiry</span><span class="of-val" id="cf-expiry">—</span></div>
-          <div class="order-field"><span class="of-label">Limit price</span><span class="of-val green" id="cf-limit">—</span></div>
+          <div class="order-field"><span class="of-label">Strike</span><input type="number" id="cf-strike" class="of-input blue" step="0.5" min="1" oninput="recomputeCustom()"></div>
+          <div class="order-field"><span class="of-label">Expiry</span><input type="date" id="cf-expiry" class="of-input" oninput="recomputeCustom()"></div>
+          <div class="order-field"><span class="of-label">Limit price</span><input type="number" id="cf-limit" class="of-input green" step="0.01" min="0.01" oninput="recomputeCustom()"></div>
+          <div style="text-align:right;margin-top:-4px"><a href="#" style="font-size:10px;color:var(--text3)" onclick="populateCustomCard(_customData);return false">↺ reset to screener defaults</a></div>
           <div class="order-field"><span class="of-label">Total credit</span><span class="of-val green" id="cf-credit">—</span></div>
           <div class="order-field"><span class="of-label">Breakeven</span><span class="of-val amber" id="cf-breakeven">—</span></div>
           <div class="order-field"><span class="of-label">Cash required</span><span class="of-val" id="cf-cash">—</span></div>
@@ -1734,6 +1740,8 @@ function loadPositions(){
               ?`<button class="act-btn-sec sec-roll" onclick="executeAction('${p.ticker}','ROLL',${JSON.stringify(p).replace(/"/g,"'")})">Roll</button>`:''
             }${p.action==='ROLL'
               ?`<button class="act-btn-sec sec-close" onclick="executeAction('${p.ticker}','BTC_READY',${JSON.stringify(p).replace(/"/g,"'")})">Close</button>`:''
+            }${(p.type==='CSP'||p.type==='CC')
+              ?`<button class="act-btn-sec sec-mkt" title="Close NOW at market price (IOC)" onclick="closeAtMarket('${p.ticker}','${p.type}',${p.strike},'${p.expiry}',${p.contracts})">✕ Market</button>`:''
             }${(p.type==='CSP'||p.type==='CC')&&(TIER_RANK[window.TIER]||0)>=TIER_RANK.pro
               ?`<button class="act-btn-sec" title="Open Greeks analyzer" onclick="openGreeksFor(${JSON.stringify(p).replace(/"/g,"'")})">Δ</button>`:''
             }
@@ -2280,6 +2288,25 @@ function activateCSP(ticker){
   const pick=window._topPicks&&window._topPicks.find(p=>p.ticker===ticker);
   if(pick&&_activePick===ticker) _renderPickCards(pick);
   _refreshPickTabs();
+}
+
+async function closeAtMarket(ticker, optType, strike, expiry, contracts){
+  const msg=`Close ${contracts}c ${ticker} ${optType} $${strike} at MARKET price?\n\nThis will fill at whatever the current ask is — no limit protection.`;
+  if(!confirm(msg)) return;
+  try{
+    const r=await fetch(API+'/order/submit',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ticker,action:'BUY_CLOSE',option_type:optType,strike:parseFloat(strike),
+        expiry,contracts,limit_price:0,tif:'IOC',price_type:'MARKET'})});
+    const d=await r.json();
+    if(d.success){
+      alert('✓ Market close submitted — order #'+(d.order_id||'?'));
+      setTimeout(()=>{ loadPositions(); loadOrders(); },2000);
+    } else {
+      alert('Market close failed: '+(d.error||'unknown error')+(d.detail?'\n\n'+d.detail:''));
+    }
+  } catch(e){
+    alert('Market close error: '+e.message);
+  }
 }
 
 function submitBTC(ticker, strike, expiry, limit){
@@ -3352,9 +3379,9 @@ function populateCustomCard(data){
   // Update fields
   document.getElementById('cf-ticker').textContent=ticker;
   document.getElementById('cf-price').textContent='$'+price;
-  document.getElementById('cf-strike').textContent='$'+strike;
-  document.getElementById('cf-expiry').textContent=expiry;
-  document.getElementById('cf-limit').textContent='$'+limit+' cr';
+  document.getElementById('cf-strike').value=strike;
+  document.getElementById('cf-expiry').value=expiry;
+  document.getElementById('cf-limit').value=limit;
   document.getElementById('cf-credit').textContent='$'+credit;
   document.getElementById('cf-breakeven').textContent='$'+breakEv;
   document.getElementById('cf-roc').textContent=roc+'%';
@@ -3476,19 +3503,36 @@ function updateCustomContracts(n){
   n=parseInt(n)||1;
   document.getElementById('cf-slider-out').textContent=n;
   if(!_customData) return;
-  const strike  = parseFloat(_customData.csp_strike||_customData.price||0);
-  const premium = parseFloat(_customData.premium_est||0.50);
-  const nav = window._accountNAV || 0;
-  document.getElementById('cf-credit').textContent='$'+Math.round(premium*100*n*100)/100;
-  const cash=strike*100*n;
-  const collPct=nav>0?Math.round(cash/nav*1000)/10:null;
+  recomputeCustom();
+}
+
+function recomputeCustom(){
+  if(!_customData) return;
+  const n      = parseInt(document.getElementById('cf-slider').value)||1;
+  const strike = parseFloat(document.getElementById('cf-strike').value)||0;
+  const limit  = parseFloat(document.getElementById('cf-limit').value)||0;
+  const expiry = document.getElementById('cf-expiry').value;
+  const nav    = window._accountNAV||0;
+
+  const credit  = Math.round(limit*100*n*100)/100;
+  const breakEv = Math.round((strike-limit)*100)/100;
+  const cashReq = strike*100*n;
+  const roc     = strike>0?Math.round(limit/strike*10000)/100:0;
+  const collPct = nav>0?Math.round(cashReq/nav*1000)/10:null;
+
+  document.getElementById('cf-credit').textContent   ='$'+credit;
+  document.getElementById('cf-breakeven').textContent='$'+breakEv;
+  document.getElementById('cf-roc').textContent      =roc+'%';
+
   const cashEl=document.getElementById('cf-cash');
   if(collPct!==null){
     const clr=collPct>8?'var(--red-text)':collPct>5?'var(--amber-text)':'var(--text)';
-    cashEl.innerHTML=`$${cash.toLocaleString()} <span style="font-size:10px;color:${clr}">· ${collPct}% of acct</span>`;
+    cashEl.innerHTML=`$${cashReq.toLocaleString()} <span style="font-size:10px;color:${clr}">· ${collPct}% of acct</span>`;
   } else {
-    cashEl.textContent='$'+cash.toLocaleString();
+    cashEl.textContent='$'+cashReq.toLocaleString();
   }
+
+  buildCustomWarnings(_customData, strike, expiry, limit, collPct, nav);
 }
 
 function clearCustomCard(){
@@ -3509,11 +3553,11 @@ function submitCustomCSP(){
     if(!_screenerIsLive) alert('Screener is in demo mode — connect to live data before placing orders.');
     return;
   }
-  const ticker   = _customData.ticker;
-  const strike   = parseFloat(_customData.csp_strike||_customData.price||0);
-  const expiry   = _customData.csp_expiry||_customData.expiry||'';
-  const premium  = parseFloat(_customData.premium_est||0.50);
-  const contracts= parseInt(document.getElementById('cf-slider').value)||1;
+  const ticker    = _customData.ticker;
+  const strike    = parseFloat(document.getElementById('cf-strike').value)||0;
+  const expiry    = document.getElementById('cf-expiry').value||'';
+  const premium   = parseFloat(document.getElementById('cf-limit').value)||0;
+  const contracts = parseInt(document.getElementById('cf-slider').value)||1;
 
   document.getElementById('custom-submit-btn').disabled=true;
   document.getElementById('custom-dot').style.background='var(--amber-text)';
