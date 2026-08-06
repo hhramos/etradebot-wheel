@@ -2297,7 +2297,7 @@ async function closeAtMarket(ticker, optType, strike, expiry, contracts){
   try{
     const r=await fetch(API+'/order/submit',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({ticker,action:'BUY_CLOSE',option_type:etOptType,strike:parseFloat(strike),
-        expiry,contracts,limit_price:0,tif:'IOC',price_type:'MARKET'})});
+        expiry,contracts,limit_price:0,tif:'DAY',price_type:'MARKET'})});
     const d=await r.json();
     if(d.success){
       alert('✓ Market close submitted — order #'+(d.order_id||'?'));
