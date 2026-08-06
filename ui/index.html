@@ -2291,11 +2291,12 @@ function activateCSP(ticker){
 }
 
 async function closeAtMarket(ticker, optType, strike, expiry, contracts){
+  const etOptType = optType==='CSP'?'PUT':optType==='CC'?'CALL':optType;
   const msg=`Close ${contracts}c ${ticker} ${optType} $${strike} at MARKET price?\n\nThis will fill at whatever the current ask is — no limit protection.`;
   if(!confirm(msg)) return;
   try{
     const r=await fetch(API+'/order/submit',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({ticker,action:'BUY_CLOSE',option_type:optType,strike:parseFloat(strike),
+      body:JSON.stringify({ticker,action:'BUY_CLOSE',option_type:etOptType,strike:parseFloat(strike),
         expiry,contracts,limit_price:0,tif:'IOC',price_type:'MARKET'})});
     const d=await r.json();
     if(d.success){
