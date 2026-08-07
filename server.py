@@ -25,6 +25,7 @@ import srv.routes_advisor                 # noqa: F401,E402
 import srv.routes_botctl                  # noqa: F401,E402
 import srv.routes_tier                    # noqa: F401,E402
 import srv.routes_trades                  # noqa: F401,E402
+import srv.routes_forecast                # noqa: F401,E402
 
 if __name__ == "__main__":
     from srv.routes_tier import DETECTED_TIER, TIER_LABELS

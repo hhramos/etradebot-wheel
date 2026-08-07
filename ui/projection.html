@@ -829,90 +829,65 @@ function buildScalingTable(currentNav){
 }
 
 // ─── Calendar ─────────────────────────────────────────────────────────────
-function buildCalendar(positions, screenerCandidates, wheelState){
-  const now=new Date();
-  function nextExpiries(n){
-    const out=[];
-    for(let i=0;i<n;i++){
-      const y=now.getFullYear(),m=now.getMonth()+i;
-      let fri=0,d=new Date(y,m,1);
-      while(d.getMonth()===m%12||(m>=12&&d.getMonth()===m%12)){
-        if(d.getDay()===5)fri++;
-        if(fri===3){out.push({label:d.toLocaleString('default',{month:'short',year:'numeric'}),
-          exp:d.toLocaleDateString('en-US',{month:'short',day:'numeric'})});break;}
-        d=new Date(d.getTime()+86400000);
-      }
-      if(out.length<=i) out.push({label:'—',exp:'—'});
-    }
-    return out;
-  }
-  const expiries=nextExpiries(6);
-  const fromBot=wheelState&&wheelState.wheels&&Object.keys(wheelState.wheels).length>0;
-  if(fromBot) document.getElementById('cal-source').textContent='from bot state';
-  else document.getElementById('cal-source').textContent='estimated';
-
-  // Month 0: current positions from bot state or portfolio
-  function month0Items(){
-    const items=[];
-    if(fromBot){
-      Object.entries(wheelState.wheels).forEach(([ticker,w])=>{
-        const phase=w.phase;
-        if(phase==='CSP_OPEN'||phase==='CSP_ROLLING')
-          items.push({type:'csp',txt:`HOLD ${ticker} $${w.strike} put`,right:w.expiry||expiries[0]?.exp});
-        else if(phase==='CC_OPEN'||phase==='CC_ROLLING')
-          items.push({type:'cc',txt:`HOLD ${ticker} $${w.strike} CC`,right:w.expiry||expiries[0]?.exp});
-        else if(phase==='ASSIGNED')
-          items.push({type:'cc',txt:`SELL CC on ${ticker}`,right:'action needed'});
-        // Add BTC target line
-        if((phase==='CSP_OPEN'||phase==='CC_OPEN')&&w.premium)
-          items.push({type:'btc',txt:`BTC ${ticker} GTC @ $${(w.premium*0.5).toFixed(2)}`,right:'50% target'});
-      });
-    } else {
-      positions.forEach(p=>{
-        if(p.type==='CSP') items.push({type:'csp',txt:`HOLD ${p.ticker} $${p.strike} put`,right:p.expiry||expiries[0]?.exp});
-        else if(p.type==='CC') items.push({type:'cc',txt:`HOLD ${p.ticker} $${p.strike} CC`,right:p.expiry||expiries[0]?.exp});
-        else items.push({type:'stock',txt:`${p.ticker} ${p.contracts}sh`,right:'assigned'});
-        if(p.type==='CSP'&&p.pnl_pct>=40) items.push({type:'btc',txt:`BTC ${p.ticker} GTC`,right:'50% target'});
-      });
-    }
-    return items;
-  }
-
-  const topPicks=screenerCandidates.filter(c=>!c.wheel_collateral_pct||c.wheel_collateral_pct<=8).slice(0,4);
-  const usePicks=topPicks.length?topPicks:PICKS.slice(0,4).map(p=>({ticker:p.ticker,csp_strike:p.strike}));
-
-  function estIncome(i){
-    if(!liveAccount||!liveAccount.net_value) return Math.round(gv('sl-capital')*gv('sl-yield')/10000*(i===0?1:1+i*0.05));
-    const nav=liveAccount.net_value, y=gv('sl-yield')/10000;
-    return Math.round(nav*y*(1+i*0.04));
-  }
-
-  const months=expiries.map((e,i)=>{
-    let items=i===0?month0Items():[];
-    if(i>0){
-      usePicks.forEach((p,pi)=>{
-        const strike=p.csp_strike||p.strike||'?';
-        const isReinvest=pi===0&&i===1&&fromBot;
-        items.push({type:isReinvest?'reinvest':'csp',
-          txt:`STO ${p.ticker} $${strike} put`,right:e.exp});
-      });
-      if(i===2&&usePicks[0]) items.push({type:'btc',txt:`BTC ${usePicks[0].ticker} GTC`,right:'50% target'});
-    }
-    return {month:e.label,est:estIncome(i),current:i===0,bot:fromBot&&i>0,items};
-  });
+function renderCalendar(months){
+  if(!months||!months.length) return;
+  // item type → CSS class for .cal-order
+  const typeClass={hold:'csp',btc:'btc',sto:'reinvest',cc:'cc',stock:'stock'};
+  const typeLabel={hold:'HOLD',btc:'BTC',sto:'STO',cc:'CC',stock:'STOCK'};
 
   document.getElementById('calendar-wrap').innerHTML=
     '<div class="cal-grid">'+
-    months.map(m=>`
-      <div class="cal-month${m.current?'':m.bot?' bot-managed':' future'}">
+    months.map(m=>{
+      const isCurrent=m.is_current;
+      const hasReal=m.items.some(i=>i.source==='live');
+      const cls=isCurrent?'':hasReal?' bot-managed':' future';
+      const srcDot=!isCurrent&&!hasReal
+        ?'<span style="font-size:9px;color:var(--text3);font-style:italic"> est.</span>':
+         !isCurrent&&hasReal
+        ?'<span style="font-size:9px;color:var(--teal)"> proj.</span>':'';
+      const incStr=m.estimated_income>0?'+$'+Math.round(m.estimated_income).toLocaleString():'—';
+      const orderLines=m.items.map(o=>{
+        const cls2=typeClass[o.type]||'stock';
+        const lbl=typeLabel[o.type]||o.type.toUpperCase();
+        const projStyle=o.source==='projected'?'border-left:2px dashed currentColor;padding-left:4px':'';
+        return `<div class="cal-order ${cls2}" style="${projStyle}">
+          <span><b>${lbl}</b> ${o.ticker!=='—'?o.ticker+' ':''}<span style="opacity:.85">${o.detail}</span></span>
+          <span style="opacity:.6;white-space:nowrap;margin-left:4px">${o.right}</span>
+        </div>`;
+      }).join('');
+      const emptyNote=m.items.length===0&&!isCurrent
+        ?'<div style="font-size:10px;color:var(--text3);padding:4px 0">Run screener to project orders</div>':'';
+      return `<div class="cal-month${cls}">
         <div class="cal-hdr">
-          <span>${m.month}${m.bot?' <span style="font-size:9px;color:var(--teal)">bot</span>':''}</span>
-          <span class="cal-hdr-inc">+$${m.est} est.</span>
+          <span>${m.label}${srcDot}</span>
+          <span class="cal-hdr-inc">${incStr}</span>
         </div>
-        ${m.items.map(o=>`<div class="cal-order ${o.type}"><span>${o.txt}</span><span style="opacity:.7">${o.right}</span></div>`).join('')}
-        <div class="cal-total"><span>${m.items.length} orders</span><span style="color:var(--green)">+$${m.est}</span></div>
-      </div>`).join('')+
+        ${orderLines}${emptyNote}
+        <div class="cal-total">
+          <span>${m.items.filter(i=>i.source==='live').length} live · ${m.items.filter(i=>i.source!=='live').length} proj.</span>
+          <span style="color:var(--green)">${incStr}</span>
+        </div>
+      </div>`;
+    }).join('')+
     '</div>';
+}
+
+function buildCalendarEstimated(){
+  // Offline fallback — client-side estimate only, clearly marked
+  const now=new Date();
+  const months=[];
+  for(let i=0;i<6;i++){
+    const d=new Date(now.getFullYear(),now.getMonth()+i,1);
+    const label=d.toLocaleString('default',{month:'short',year:'numeric'});
+    const items=i===0&&livePositions.length
+      ? livePositions.filter(p=>p.type==='CSP'||p.type==='CC').map(p=>({
+          type:'hold',ticker:p.ticker,detail:`$${p.strike} ${p.type==='CSP'?'put':'call'} ×${p.contracts}c`,
+          right:p.expiry||'—',source:'live'}))
+      : [{type:'sto',ticker:'—',detail:'estimated — server offline',right:'—',source:'estimated'}];
+    months.push({label,is_current:i===0,estimated_income:0,items});
+  }
+  document.getElementById('cal-source').textContent='estimated (offline)';
+  renderCalendar(months);
 }
 
 function applyScreenerData(candidates){
@@ -983,17 +958,17 @@ async function loadLiveData(){
         document.getElementById('live-as-of').textContent='as of '+_nowStr;
         const _upd=document.getElementById('proj-updated');
         if(_upd) _upd.textContent='updated '+_nowStr;
-        buildCalendar(livePositions,liveScreener,liveWheelState);
+        loadForecast();
       } else {
         badge.innerHTML='<i class="ti ti-wifi-off" style="font-size:11px"></i> not linked';
         badge.style.cssText='font-size:10px;padding:3px 8px;border-radius:20px;background:var(--bg3);color:var(--text3);border:0.5px solid var(--border2)';
-        buildCalendar([],[],{});
+        buildCalendarEstimated();
       }
     }
   } catch(e){
     badge.innerHTML='<i class="ti ti-alert-circle" style="font-size:11px"></i> offline';
     badge.style.cssText='font-size:10px;padding:3px 8px;border-radius:20px;background:var(--red-dim);color:var(--red-text);border:0.5px solid var(--red-text)';
-    buildCalendar([],[],{});
+    buildCalendarEstimated();
   }
   recalc();
   loadForecast();
@@ -1050,7 +1025,7 @@ function renderLivePositions(positions, acct){
 }
 
 // ─── Boot ─────────────────────────────────────────────────────────────────
-buildCalendar([],[],{});
+buildCalendarEstimated();
 loadLiveData();
 loadLiveReportCard();
 setInterval(loadLiveData, 5 * 60 * 1000);
@@ -1664,9 +1639,21 @@ function renderForecast(data){
 }
 function loadForecast(){
   fetch(API+'/forecast').then(function(r){return r.json()}).then(function(d){
-    renderForecast(d);
+    // d.months → calendar; d itself → forecast table
+    if(d.months){
+      const src=d.data_source==='live_positions'
+        ? d.positions_count+' live position'+(d.positions_count!==1?'s':'')
+        : 'estimated';
+      document.getElementById('cal-source').textContent=src;
+      renderCalendar(d.months);
+    }
+    // Forecast table uses existing buildForecastFromLive logic (data unchanged)
+    buildForecastFromLive();
     document.getElementById('forecast-updated').textContent='Updated: '+new Date().toLocaleTimeString();
-  }).catch(function(){buildForecastFromLive();});
+  }).catch(function(){
+    buildCalendarEstimated();
+    buildForecastFromLive();
+  });
 }
 function buildForecastFromLive(){
   var nav=(liveAccount&&liveAccount.net_value)?liveAccount.net_value:0;
