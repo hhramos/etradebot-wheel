@@ -397,6 +397,21 @@ code{font-family:var(--mono);font-size:11px;background:var(--bg3);padding:1px 5p
 .of-input.blue{color:var(--blue-text)}.of-input.green{color:var(--green-text)}
 .act-btn-sec.sec-mkt{color:var(--red-text);border-color:var(--red-dim)}
 .act-btn-sec.sec-mkt:hover{background:var(--red-dim)}
+/* Contract scaling panel */
+.scl-table{width:100%;border-collapse:collapse;font-size:11px}
+.scl-table th{padding:4px 8px;font-size:10px;color:var(--text3);text-align:left;border-bottom:0.5px solid var(--border);white-space:nowrap}
+.scl-table th.r{text-align:right}
+.scl-table td{padding:4px 8px;border-bottom:0.5px solid var(--border);font-family:var(--mono);font-size:11px}
+.scl-table td.r{text-align:right}
+.scl-table tr:last-child td{border-bottom:none}
+.scl-bar-wrap{width:70px;height:5px;background:var(--bg3);border-radius:3px;display:inline-block;vertical-align:middle;margin-right:4px}
+.scl-bar{height:5px;border-radius:3px;transition:width .3s}
+.scl-green{background:var(--green)}.scl-amber{background:var(--amber)}.scl-red{background:var(--red)}
+.scl-badge{font-size:9px;padding:1px 5px;border-radius:3px;white-space:nowrap}
+.scl-badge.room{background:var(--green-dim);color:var(--green-text)}
+.scl-badge.near{background:var(--amber-dim);color:var(--amber-text)}
+.scl-badge.full{background:var(--red-dim);color:var(--red-text)}
+.scl-footer{font-size:10px;color:var(--text3);padding:5px 0 0;margin-top:4px;border-top:0.5px solid var(--border)}
 .pick-tabs{display:flex;gap:6px;margin-bottom:12px}
 .pick-tab{display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:var(--radius);font-size:12px;border:0.5px solid var(--border2);background:var(--bg3);color:var(--text2);cursor:pointer;transition:all .15s}
 .pick-tab:hover{background:var(--bg2);color:var(--text)}
@@ -771,6 +786,15 @@ code{font-family:var(--mono);font-size:11px;background:var(--bg3);padding:1px 5p
         <div class="sum-item"><div class="sum-label">Actions</div><div class="sum-val" id="s-actions" style="color:var(--red-text)">—</div></div>
         <div class="sum-item"><div class="sum-label">Open orders</div><div class="sum-val" id="s-orders" style="color:var(--blue-text)">—</div></div>
       </div>
+      <!-- Contract Scaling toggle -->
+      <div id="scaling-toggle-row" style="display:none;padding:4px 14px;border-top:0.5px solid var(--border)">
+        <a href="#" id="scaling-toggle" onclick="toggleScaling();return false"
+           style="font-size:10px;color:var(--text3);text-decoration:none;display:flex;align-items:center;gap:4px">
+          <span id="scaling-chevron">▸</span> Contract Scaling
+        </a>
+      </div>
+      <!-- Contract Scaling panel -->
+      <div id="scaling-panel" style="display:none;border-top:0.5px solid var(--border);padding:10px 14px"></div>
     </div>
 
     <div class="divider"></div>
@@ -1777,6 +1801,7 @@ function loadPositions(){
     document.getElementById('s-actions').textContent=actions;
     document.getElementById('s-orders').textContent=openOrders.length||'—';
     document.getElementById('s-orders').style.color=openOrders.length?'var(--blue-text)':'var(--text3)';
+    renderScalingPanel(positions);
 
     if(_connected) loadPositions._lastOpenOrders = openOrders;
   }).catch(()=>{ document.getElementById('positions-wrap').innerHTML='<div class="empty">Server offline — run start.sh / start.bat</div>'; });
@@ -2288,6 +2313,86 @@ function activateCSP(ticker){
   const pick=window._topPicks&&window._topPicks.find(p=>p.ticker===ticker);
   if(pick&&_activePick===ticker) _renderPickCards(pick);
   _refreshPickTabs();
+}
+
+// ── Contract Scaling Panel ────────────────────────────────────────────────
+let _scalingOpen = false;
+function toggleScaling(){
+  _scalingOpen = !_scalingOpen;
+  document.getElementById('scaling-panel').style.display = _scalingOpen ? 'block' : 'none';
+  document.getElementById('scaling-chevron').textContent = _scalingOpen ? '▾' : '▸';
+}
+
+function renderScalingPanel(positions){
+  const nav = window._accountNAV || 0;
+  const toggleRow = document.getElementById('scaling-toggle-row');
+  const panel     = document.getElementById('scaling-panel');
+  if(!toggleRow || !panel) return;
+
+  const opts = positions.filter(p => p.type === 'CSP' || p.type === 'CC');
+  if(!opts.length){ toggleRow.style.display = 'none'; return; }
+  toggleRow.style.display = 'block';
+  if(!_scalingOpen) return; // don't render content if collapsed
+
+  function maxContracts(strike){
+    if(!strike || strike <= 0) return 0;
+    const col1 = strike * 100;
+    const byPosCap = nav > 0 ? Math.floor((nav * 0.08) / col1) : 99;
+    return Math.min(byPosCap, 10);
+  }
+
+  let totalCollateral = 0;
+  const rows = opts.map(p => {
+    const strike    = parseFloat(p.strike) || 0;
+    const running   = parseInt(p.contracts) || 0;
+    const maxAllowed = maxContracts(strike);
+    const ratio     = maxAllowed > 0 ? Math.min(running / maxAllowed, 1) : 1;
+    const barPct    = Math.round(ratio * 100);
+    const barCls    = ratio < 0.70 ? 'scl-green' : ratio < 1.0 ? 'scl-amber' : 'scl-red';
+    const badgeTxt  = maxAllowed === 0  ? 'Strike too large'
+                    : running >= maxAllowed ? 'At cap'
+                    : ratio >= 0.70        ? 'Near cap'
+                    : 'Room to scale';
+    const badgeCls  = maxAllowed === 0 || running >= maxAllowed ? 'full'
+                    : ratio >= 0.70 ? 'near' : 'room';
+    const colLabel  = p.type === 'CSP' ? 'put' : 'call';
+    totalCollateral += strike * 100 * running;
+    return `<tr>
+      <td>${p.ticker}</td>
+      <td>${p.type}</td>
+      <td class="r">$${strike}</td>
+      <td class="r">${running}c</td>
+      <td class="r">${maxAllowed > 0 ? maxAllowed+'c' : '&lt;1c'}</td>
+      <td>
+        <span class="scl-bar-wrap"><span class="scl-bar ${barCls}" style="width:${barPct}%"></span></span>
+        ${barPct}%
+      </td>
+      <td><span class="scl-badge ${badgeCls}">${badgeTxt}</span></td>
+    </tr>`;
+  }).join('');
+
+  const deployedPct = nav > 0 ? (totalCollateral / nav * 100).toFixed(1) : '—';
+  const deployedCls = nav > 0 && totalCollateral / nav > 0.80 ? 'color:var(--red-text)'
+                    : nav > 0 && totalCollateral / nav > 0.65 ? 'color:var(--amber-text)'
+                    : 'color:var(--text3)';
+  const navLine = nav > 0
+    ? `NAV $${nav.toLocaleString()} · 8% cap = $${Math.round(nav*0.08).toLocaleString()}/position`
+    : 'Connect account to see NAV-based caps';
+
+  panel.innerHTML = `
+    <div style="font-size:10px;color:var(--text3);margin-bottom:6px">${navLine}</div>
+    <table class="scl-table">
+      <thead><tr>
+        <th>Ticker</th><th>Type</th><th class="r">Strike</th>
+        <th class="r">Running</th><th class="r">Max</th>
+        <th>Capacity</th><th>Status</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div class="scl-footer" style="${deployedCls}">
+      Total collateral: $${totalCollateral.toLocaleString()}
+      ${nav > 0 ? `· ${deployedPct}% of NAV deployed (cap: 80%)` : ''}
+    </div>`;
 }
 
 async function closeAtMarket(ticker, optType, strike, expiry, contracts){
