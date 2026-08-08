@@ -221,7 +221,7 @@ def forecast():
                 if n == 0:
                     continue
                 prem     = _premium_est(cand)
-                exp_str  = expiry_dates[i].strftime("%b %-d")
+                exp_str  = expiry_dates[i].strftime("%b %d").replace(" 0", " ")
                 col_used = strike * 100 * n
 
                 # This position exits at 21 DTE in month i+1 (or month i if short cycle)
@@ -257,7 +257,7 @@ def forecast():
             items.append({
                 "type": "sto", "ticker": "—",
                 "detail": f"${capital:,.0f} ready — run screener to project orders",
-                "right": expiry_dates[i].strftime("%b %-d"),
+                "right": expiry_dates[i].strftime("%b %d").replace(" 0", " "),
                 "source": "estimated", "income": 0,
             })
 
