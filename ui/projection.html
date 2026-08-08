@@ -829,44 +829,67 @@ function buildScalingTable(currentNav){
 }
 
 // ─── Calendar ─────────────────────────────────────────────────────────────
-function renderCalendar(months){
+function renderCalendar(months, meta){
   if(!months||!months.length) return;
-  // item type → CSS class for .cal-order
   const typeClass={hold:'csp',btc:'btc',sto:'reinvest',cc:'cc',stock:'stock'};
-  const typeLabel={hold:'HOLD',btc:'BTC',sto:'STO',cc:'CC',stock:'STOCK'};
+  const typeLabel={hold:'HOLD',btc:'BTC ✕',sto:'STO',cc:'CC',stock:'STK'};
+
+  // Summary header above calendar
+  const totalIncome = meta&&meta.total_income ? meta.total_income : months.reduce((s,m)=>s+(m.net_income||0),0);
+  const startNav    = meta&&meta.nav ? meta.nav : 0;
+  const endNav      = months.length ? (months[months.length-1].running_nav||0) : 0;
+  const navGain     = endNav - startNav;
+  const summaryHtml = (startNav>0&&endNav>0) ? `
+    <div style="display:flex;gap:16px;font-size:11px;color:var(--text3);padding:0 0 10px;flex-wrap:wrap">
+      <span>Net premiums (6 mo): <b style="color:var(--green-text)">+$${totalIncome.toLocaleString()}</b></span>
+      <span>Projected NAV: <b style="color:var(--blue-text)">$${startNav.toLocaleString()}</b>
+        → <b style="color:var(--green-text)">$${endNav.toLocaleString()}</b>
+        <span style="color:var(--green-text)">(+$${navGain.toLocaleString()})</span></span>
+      <span style="color:var(--text3);font-style:italic">assumes 50% profit capture per cycle</span>
+    </div>` : '';
 
   document.getElementById('calendar-wrap').innerHTML=
+    summaryHtml+
     '<div class="cal-grid">'+
     months.map(m=>{
       const isCurrent=m.is_current;
       const hasReal=m.items.some(i=>i.source==='live');
       const cls=isCurrent?'':hasReal?' bot-managed':' future';
-      const srcDot=!isCurrent&&!hasReal
-        ?'<span style="font-size:9px;color:var(--text3);font-style:italic"> est.</span>':
-         !isCurrent&&hasReal
+      const srcTag=!isCurrent&&!hasReal
+        ?'<span style="font-size:9px;color:var(--text3);font-style:italic"> est.</span>'
+        :!isCurrent
         ?'<span style="font-size:9px;color:var(--teal)"> proj.</span>':'';
-      const incStr=m.estimated_income>0?'+$'+Math.round(m.estimated_income).toLocaleString():'—';
+
+      const netInc  = m.net_income||0;
+      const incStr  = netInc>0 ? '+$'+Math.round(netInc).toLocaleString() : '—';
+      const navStr  = m.running_nav&&m.running_nav>0 ? '$'+Math.round(m.running_nav).toLocaleString() : '';
+
       const orderLines=m.items.map(o=>{
-        const cls2=typeClass[o.type]||'stock';
+        const c2=typeClass[o.type]||'stock';
         const lbl=typeLabel[o.type]||o.type.toUpperCase();
         const projStyle=o.source==='projected'?'border-left:2px dashed currentColor;padding-left:4px':'';
-        return `<div class="cal-order ${cls2}" style="${projStyle}">
-          <span><b>${lbl}</b> ${o.ticker!=='—'?o.ticker+' ':''}<span style="opacity:.85">${o.detail}</span></span>
+        return `<div class="cal-order ${c2}" style="${projStyle}">
+          <span><b>${lbl}</b> ${o.ticker&&o.ticker!=='—'?o.ticker+' ':''}<span style="opacity:.85">${o.detail}</span></span>
           <span style="opacity:.6;white-space:nowrap;margin-left:4px">${o.right}</span>
         </div>`;
       }).join('');
       const emptyNote=m.items.length===0&&!isCurrent
         ?'<div style="font-size:10px;color:var(--text3);padding:4px 0">Run screener to project orders</div>':'';
+
       return `<div class="cal-month${cls}">
         <div class="cal-hdr">
-          <span>${m.label}${srcDot}</span>
+          <span>${m.label}${srcTag}</span>
           <span class="cal-hdr-inc">${incStr}</span>
         </div>
         ${orderLines}${emptyNote}
         <div class="cal-total">
-          <span>${m.items.filter(i=>i.source==='live').length} live · ${m.items.filter(i=>i.source!=='live').length} proj.</span>
+          <span style="color:var(--text3)">Net premium</span>
           <span style="color:var(--green)">${incStr}</span>
         </div>
+        ${navStr?`<div class="cal-total" style="margin-top:2px">
+          <span style="color:var(--text3)">Projected NAV</span>
+          <span style="color:var(--blue-text)">${navStr}</span>
+        </div>`:''}
       </div>`;
     }).join('')+
     '</div>';
@@ -887,7 +910,7 @@ function buildCalendarEstimated(){
     months.push({label,is_current:i===0,estimated_income:0,items});
   }
   document.getElementById('cal-source').textContent='estimated (offline)';
-  renderCalendar(months);
+  renderCalendar(months, null);
 }
 
 function applyScreenerData(candidates){
@@ -1639,15 +1662,14 @@ function renderForecast(data){
 }
 function loadForecast(){
   fetch(API+'/forecast').then(function(r){return r.json()}).then(function(d){
-    // d.months → calendar; d itself → forecast table
     if(d.months){
+      const cnt=d.positions_count||0;
       const src=d.data_source==='live_positions'
-        ? d.positions_count+' live position'+(d.positions_count!==1?'s':'')
+        ? cnt+' live position'+(cnt!==1?'s':'')+' · 50%/21DTE model'
         : 'estimated';
       document.getElementById('cal-source').textContent=src;
-      renderCalendar(d.months);
+      renderCalendar(d.months, d);
     }
-    // Forecast table uses existing buildForecastFromLive logic (data unchanged)
     buildForecastFromLive();
     document.getElementById('forecast-updated').textContent='Updated: '+new Date().toLocaleTimeString();
   }).catch(function(){
