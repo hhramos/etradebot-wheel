@@ -50,9 +50,15 @@ def _max_contracts(strike: float, capital: float, nav: float) -> int:
     if strike <= 0 or capital <= 0:
         return 0
     col1   = strike * 100
-    by_cap = int(capital / col1)
-    by_pos = int((nav * MAX_POSITION_PCT) / col1) if nav > 0 else by_cap
-    return min(by_cap, by_pos, MAX_CONTRACTS)
+    by_cap = int(capital / col1)     # what freed capital can actually afford
+    # NAV position cap is advisory in the projection — enforce it only when
+    # it allows at least 1 contract (avoids zeroing out small accounts where
+    # every screener pick exceeds the 8% cap).
+    if nav > 0:
+        by_pos = int((nav * MAX_POSITION_PCT) / col1)
+        if by_pos >= 1:
+            by_cap = min(by_cap, by_pos)
+    return min(by_cap, MAX_CONTRACTS)
 
 
 def _premium_est(candidate: dict) -> float:
@@ -97,11 +103,8 @@ def forecast():
     sc_raw = _session.get("_screener_cache", {})
     candidates = list(sc_raw.values()) if isinstance(sc_raw, dict) else list(sc_raw or [])
     candidates = [c for c in candidates if isinstance(c, dict)]
-    if nav > 0:
-        candidates = [
-            c for c in candidates
-            if float(c.get("csp_strike") or c.get("price") or 0) * 100 <= nav * MAX_POSITION_PCT
-        ]
+    # No NAV pre-filter here — _max_contracts() returns 0 for unaffordable strikes,
+    # so ineligible candidates are excluded naturally during allocation.
     candidates.sort(key=lambda c: float(c.get("wheel_score") or 0), reverse=True)
 
     expiry_dates = [_next_monthly_expiry(i) for i in range(6)]
