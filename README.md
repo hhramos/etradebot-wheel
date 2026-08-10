@@ -301,7 +301,8 @@ The **Greeks calculator** is a Pro plugin, but it has the same no-account requir
 | **Scenario table** | 9 price scenarios (±15%) with P&L now vs at expiry | Pro |
 | **Ollama AI trade thesis** | Plain-English win/kill conditions, Greeks verdict, wheel fit rating | Pro |
 
-> **Pro — $15/month** · [Sponsor on GitHub](https://github.com/sponsors/Hybridworksolutions) to unlock
+> **Pro — $1/month** · [Sponsor on GitHub](https://github.com/sponsors/Hybridworksolutions) to unlock Greeks
+> **Pro+ — $3/month** · [Sponsor on GitHub](https://github.com/sponsors/Hybridworksolutions) to unlock Greeks + Micro Futures
 
 **What uses realistic demo data when you're not connected:**
 
