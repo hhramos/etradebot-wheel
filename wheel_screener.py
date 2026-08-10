@@ -254,6 +254,11 @@ class WheelScreener:
             coll_pct     = round(collateral / self.account_nav * 100, 2) if self.account_nav > 0 else None
 
             dy           = float(info.get("dividendYield") or 0)
+            # yfinance inconsistently returns dividendYield as a decimal (0.047)
+            # for some tickers and as a whole-number pct (4.7) for others (e.g. T, VZ).
+            # Normalize: if value > 1 it's already a percentage, don't multiply again.
+            if dy > 1:
+                dy = dy / 100
             pe           = info.get("trailingPE")
             premium_est  = round(iv_pct / 500 * strike, 2)   # rough Black-Scholes proxy
             roc_est      = round(premium_est / strike * 100, 2)
