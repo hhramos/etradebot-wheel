@@ -437,11 +437,14 @@ def order_roll():
                 elif isinstance(pids, dict):
                     preview_id = pids.get("previewId")
             except Exception as pe:
-                logger.warning(f"ROLL {leg_label} preview parse error: {pe}")
+                logger.warning(f"ROLL {leg_label} preview parse error: {pe} | raw body: {prev.text[:500]}")
+        else:
+            logger.warning(f"ROLL {leg_label} preview HTTP {prev.status_code}: {prev.text[:500]}")
+
+        if preview_id:
             logger.info(f"ROLL {leg_label} preview OK — previewId={preview_id}")
         else:
-            raw = prev.text[:500]
-            logger.warning(f"ROLL {leg_label} preview HTTP {prev.status_code}: {raw}")
+            logger.warning(f"ROLL {leg_label} preview returned no previewId (HTTP {prev.status_code})")
 
         if not preview_id:
             raise ValueError(f"{leg_label} preview did not return a previewId — cannot place order")
