@@ -145,9 +145,12 @@ def order_submit():
             elif isinstance(pids, dict):
                 preview_id = pids.get("previewId")
         except Exception as pe:
-            logger.warning(f"Order preview parse error: {pe}")
+            logger.warning(f"Order preview parse error: {pe} | HTTP {preview_resp.status_code} | raw body: {preview_resp.text[:500]}")
 
-        logger.info(f"Order preview OK — previewId={preview_id}")
+        if preview_id:
+            logger.info(f"Order preview OK — previewId={preview_id}")
+        else:
+            logger.warning(f"Order preview returned no previewId (HTTP {preview_resp.status_code})")
 
         if not preview_id:
             return jsonify({"success": False,
