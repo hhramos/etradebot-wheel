@@ -136,6 +136,7 @@ def order_submit():
 
         # Extract previewId from preview response
         preview_id = None
+        etrade_error_msg = None
         try:
             pr = preview_resp.json()
             logger.info(f"Order preview response: {pr}")
@@ -145,7 +146,17 @@ def order_submit():
             elif isinstance(pids, dict):
                 preview_id = pids.get("previewId")
         except Exception as pe:
-            logger.warning(f"Order preview parse error: {pe} | HTTP {preview_resp.status_code} | raw body: {preview_resp.text[:500]}")
+            raw = preview_resp.text[:1000]
+            logger.warning(f"Order preview parse error: {pe} | HTTP {preview_resp.status_code} | raw body: {raw}")
+            # Try to extract error message from E*Trade XML error response
+            try:
+                import xml.etree.ElementTree as ET
+                err_root = ET.fromstring(preview_resp.text)
+                code = err_root.findtext("code") or ""
+                msg  = err_root.findtext("message") or ""
+                etrade_error_msg = f"E*Trade error {code}: {msg}" if code else msg
+            except Exception:
+                etrade_error_msg = f"Preview failed (HTTP {preview_resp.status_code})"
 
         if preview_id:
             logger.info(f"Order preview OK — previewId={preview_id}")
@@ -154,8 +165,8 @@ def order_submit():
 
         if not preview_id:
             return jsonify({"success": False,
-                            "error": "Preview did not return a previewId — order not placed",
-                            "detail": "Check server log for the full preview response"}), 400
+                            "error": etrade_error_msg or "Preview did not return a previewId — order not placed",
+                            "detail": preview_resp.text[:500]}), 400
 
         # ── Step 2: Place with previewId ─────────────────────────────────────
         # Inject previewId into the XML for the place call
@@ -430,6 +441,7 @@ def order_roll():
             _session["_token_expired"] = True
             raise ValueError("Token expired")
         preview_id = None
+        etrade_err = None
         if prev.status_code in (200, 201):
             try:
                 pr_json = prev.json()
@@ -441,8 +453,17 @@ def order_roll():
                     preview_id = pids.get("previewId")
             except Exception as pe:
                 logger.warning(f"ROLL {leg_label} preview parse error: {pe} | raw body: {prev.text[:500]}")
+                try:
+                    import xml.etree.ElementTree as ET
+                    err_root = ET.fromstring(prev.text)
+                    code = err_root.findtext("code") or ""
+                    msg  = err_root.findtext("message") or ""
+                    etrade_err = f"E*Trade error {code}: {msg}" if code else msg
+                except Exception:
+                    etrade_err = f"Preview failed (HTTP {prev.status_code})"
         else:
             logger.warning(f"ROLL {leg_label} preview HTTP {prev.status_code}: {prev.text[:500]}")
+            etrade_err = f"Preview HTTP {prev.status_code}"
 
         if preview_id:
             logger.info(f"ROLL {leg_label} preview OK — previewId={preview_id}")
@@ -450,7 +471,7 @@ def order_roll():
             logger.warning(f"ROLL {leg_label} preview returned no previewId (HTTP {prev.status_code})")
 
         if not preview_id:
-            raise ValueError(f"{leg_label} preview did not return a previewId — cannot place order")
+            raise ValueError(etrade_err or f"{leg_label} preview did not return a previewId — cannot place order")
 
         resp = sess.post(f"{base_url}/place", data=_xml(preview_id),
                          headers=hdrs, timeout=30)
