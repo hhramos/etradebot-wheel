@@ -904,6 +904,7 @@ code{font-family:var(--mono);font-size:11px;background:var(--bg3);padding:1px 5p
         <button class="qq-btn" onclick="quickAsk('why')" disabled id="qq-why">🤔 Why these actions?</button>
         <button class="qq-btn" onclick="quickAsk('opportunity')" disabled id="qq-opp">💡 Explain opportunity</button>
         <button class="qq-btn" onclick="quickAsk('alternatives')" disabled id="qq-alt">🔄 Alternative actions</button>
+        <button class="qq-btn" onclick="quickAsk('outlook')" disabled id="qq-outlook">📊 Next week outlook</button>
       </div>
     </div>
 
@@ -2507,6 +2508,7 @@ const QUICK_PROMPTS = {
   opportunity: "For each position, explain: the profit potential, the realistic timeline to realize it, the breakeven price, and the downside if the position moves against me.",
   alternatives:"For each position, list ALTERNATIVE STRATEGIES I could use instead of the recommended action. Compare the opportunity, expected profit, and timeline for each alternative.",
   full:        "Provide a full structured wheel strategy analysis of all my current positions. Use the Position Actions table, New Positions to Open table, and Portfolio Risk Assessment format.",
+  outlook:     "For each of my current positions, give me a WEEKLY SCENARIO OUTLOOK with three scenarios — Base, Bull, and Bear. For each scenario include: probability (%), key price level to watch, expected P&L impact, and recommended action. Format as a table per position.",
 };
 
 // ── Pill update ───────────────────────────────────────────────────────────
@@ -2618,7 +2620,7 @@ function setChatEnabled(on){
   const abtn=document.getElementById('advisor-btn');
   if(inp) inp.disabled=!on;
   if(abtn) abtn.disabled=!on;
-  ['qq-today','qq-week','qq-month','qq-why','qq-opp','qq-alt'].forEach(id=>{
+  ['qq-today','qq-week','qq-month','qq-why','qq-opp','qq-alt','qq-outlook'].forEach(id=>{
     const el=document.getElementById(id); if(el) el.disabled=!on;
   });
   if(!btn) return;
