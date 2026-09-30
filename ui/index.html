@@ -1817,8 +1817,14 @@ function cancelOrder(orderId, ticker){
     }).catch(()=>alert('Server error cancelling order'));
 }
 
-function setGTCFromPosition(ticker, strike, expiry, contracts, cost, optType){
+async function setGTCFromPosition(ticker, strike, expiry, contracts, cost, optType){
   const limit=(cost*0.50).toFixed(2);
+  const ot=(optType||'PUT').toUpperCase();
+  try{
+    const chk=await fetch(`${API}/order/check?ticker=${ticker}&option_type=${ot}&strike=${strike}&expiry=${expiry}`);
+    const chkData=await chk.json();
+    if(chkData.conflict){ alert('⚠ '+chkData.message); return; }
+  }catch(e){ /* network error — fall through */ }
   if(!confirm(`Place GTC BTC order:\n${contracts}c ${ticker} $${strike}P ${expiry}\nLimit: $${limit} debit (50% of $${cost})?`)) return;
   fetch(API+'/order/submit',{method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({ticker,action:'BUY_CLOSE',option_type:optType||'PUT',strike:parseFloat(strike),expiry,contracts,limit_price:parseFloat(limit),tif:'GTC'})
@@ -1856,16 +1862,33 @@ function executeAction(ticker, action, pos){
     const limit=(pos.cost*0.5).toFixed(2);
     const optType=pos.type==='CC'?'CALL':'PUT';
     const optLabel=optType==='CALL'?'C':'P';
-    if(!confirm(`Place BTC order:\n${pos.contracts}c ${ticker} ${pos.strike}${optLabel} ${pos.expiry}\nLimit: $${limit} debit?`)) return;
-    fetch(API+'/order/submit',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({ticker,action:'BUY_CLOSE',option_type:optType,
-        strike:pos.strike,expiry:pos.expiry,contracts:pos.contracts,
-        limit_price:parseFloat(limit),tif:'DAY'})
-    }).then(r=>r.json()).then(d=>{
-      if(d.success&&!d.demo) loadPositions();
-      else if(d.demo) alert('⚠ Order NOT sent — demo mode. Re-authenticate.');
-      else alert('Error: '+(d.error||'unknown')+(d.detail?'\n'+d.detail:''));
-    }).catch(()=>alert('Server error'));
+    // Pre-check: block if an open BUY_CLOSE order already exists
+    fetch(`${API}/order/check?ticker=${ticker}&option_type=${optType}&strike=${pos.strike}&expiry=${pos.expiry}`)
+      .then(r=>r.json()).then(chk=>{
+        if(chk.conflict){ alert('⚠ '+chk.message); return; }
+        if(!confirm(`Place BTC order:\n${pos.contracts}c ${ticker} ${pos.strike}${optLabel} ${pos.expiry}\nLimit: $${limit} debit?`)) return;
+        fetch(API+'/order/submit',{method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({ticker,action:'BUY_CLOSE',option_type:optType,
+            strike:pos.strike,expiry:pos.expiry,contracts:pos.contracts,
+            limit_price:parseFloat(limit),tif:'DAY'})
+        }).then(r=>r.json()).then(d=>{
+          if(d.success&&!d.demo) loadPositions();
+          else if(d.demo) alert('⚠ Order NOT sent — demo mode. Re-authenticate.');
+          else alert('Error: '+(d.error||'unknown')+(d.detail?'\n'+d.detail:''));
+        }).catch(()=>alert('Server error'));
+      }).catch(()=>{
+        // If check fails (network), fall through and let server guard catch it
+        if(!confirm(`Place BTC order:\n${pos.contracts}c ${ticker} ${pos.strike}${optLabel} ${pos.expiry}\nLimit: $${limit} debit?`)) return;
+        fetch(API+'/order/submit',{method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({ticker,action:'BUY_CLOSE',option_type:optType,
+            strike:pos.strike,expiry:pos.expiry,contracts:pos.contracts,
+            limit_price:parseFloat(limit),tif:'DAY'})
+        }).then(r=>r.json()).then(d=>{
+          if(d.success&&!d.demo) loadPositions();
+          else if(d.demo) alert('⚠ Order NOT sent — demo mode. Re-authenticate.');
+          else alert('Error: '+(d.error||'unknown')+(d.detail?'\n'+d.detail:''));
+        }).catch(()=>alert('Server error'));
+      });
     return;
   }
   if(action==='SELL_CC'){
@@ -2397,6 +2420,12 @@ function renderScalingPanel(positions){
 
 async function closeAtMarket(ticker, optType, strike, expiry, contracts){
   const etOptType = optType==='CSP'?'PUT':optType==='CC'?'CALL':optType;
+  // Pre-check: block if an open BUY_CLOSE order already exists
+  try{
+    const chk=await fetch(`${API}/order/check?ticker=${ticker}&option_type=${etOptType}&strike=${strike}&expiry=${expiry}`);
+    const chkData=await chk.json();
+    if(chkData.conflict){ alert('⚠ '+chkData.message); return; }
+  }catch(e){ /* fall through on network error */ }
   const msg=`Close ${contracts}c ${ticker} ${optType} $${strike} at MARKET price?\n\nThis will fill at whatever the current ask is — no limit protection.`;
   if(!confirm(msg)) return;
   try{
@@ -3217,7 +3246,7 @@ function selectRollRow(row, newStrike, newMid, newExpiry){
   setRollStatus(`Selected: $${newStrike} exp ${newExpiry} — net ${net>=0?'credit':'debit'} $${Math.abs(net).toFixed(2)}. Adjust limits if needed then click Execute.`,'');
 }
 
-function submitRoll(){
+async function submitRoll(){
   if(!_rollPos||!_rollPick){
     setRollStatus('Select a new strike first.','red'); return;
   }
@@ -3226,6 +3255,18 @@ function submitRoll(){
   if(!btcLim||!stoLim){
     setRollStatus('Enter valid limit prices for both legs.','red'); return;
   }
+
+  // Pre-check: block if an open BUY_CLOSE order already exists for this position
+  const optType = _rollPos.type==='CC'?'CALL':'PUT';
+  try{
+    const chk = await fetch(`${API}/order/check?ticker=${_rollPos.ticker}&option_type=${optType}&strike=${_rollPos.strike}&expiry=${_rollPos.expiry}`);
+    const chkData = await chk.json();
+    if(chkData.conflict){
+      setRollStatus(`⚠ ${chkData.message}`,'red');
+      return;
+    }
+  }catch(e){ /* network error — allow through, server will re-check */ }
+
   const net = stoLim - btcLim;
   const msg = `Execute roll for ${_rollPos.ticker}:
 
