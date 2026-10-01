@@ -39,6 +39,16 @@ def order_submit():
     strike      = float(order.get("strike", 0))
     expiry      = order.get("expiry","")
     contracts   = int(order.get("contracts", 1))
+
+    # Guard: block duplicate BUY_CLOSE if an open close order already exists
+    if action in ("BUY_CLOSE", "BUY_TO_CLOSE"):
+        conflict = _conflict_order(ticker, option_type, strike, expiry)
+        if conflict:
+            msg = (f"Open BUY_CLOSE order #{conflict['order_id']} already exists "
+                   f"for {ticker} ${strike} {option_type} {expiry}. "
+                   f"Cancel it in E*Trade before placing a new close.")
+            logger.warning(f"SUBMIT BLOCKED — {msg}")
+            return jsonify({"success": False, "error": msg}), 409
     limit_price    = float(order.get("limit_price", 0))
     price_type_raw = order.get("price_type", "LIMIT").upper()
     price_type     = "MARKET" if price_type_raw == "MARKET" else "LIMIT"
@@ -349,6 +359,89 @@ def option_chain(ticker):
                         "estimated": True})
 
 
+def _fetch_open_close_orders():
+    """Return list of open BUY_CLOSE / BUY_TO_CLOSE orders from E*Trade.
+    Returns [] on any error (callers treat as 'no conflict found')."""
+    try:
+        import pyetrade
+        api = pyetrade.ETradeOrder(
+            _session["consumer_key"], _session["consumer_secret"],
+            _session["access_token"], _session["access_token_secret"], dev=False,
+        )
+        raw = api.list_orders(_session["account_id"], resp_format="json")
+        order_list = (raw.get("OrdersResponse", {}).get("Order", [])
+                      if isinstance(raw, dict) else [])
+        if isinstance(order_list, dict):
+            order_list = [order_list]
+        result = []
+        for o in order_list:
+            detail = o.get("OrderDetail", [{}])
+            if isinstance(detail, list): detail = detail[0] if detail else {}
+            instr   = detail.get("Instrument", [{}])
+            if isinstance(instr, list): instr = instr[0] if instr else {}
+            action  = instr.get("orderAction", "")
+            status  = (o.get("status") or detail.get("status") or "").upper()
+            if action not in ("BUY_CLOSE", "BUY_TO_CLOSE"):
+                continue
+            if status not in ("OPEN", "PARTIAL_FILL", "OPEN_PENDING"):
+                continue
+            product = instr.get("Product", {})
+            ey = int(product.get("expiryYear",  0) or 0)
+            em = int(product.get("expiryMonth", 0) or 0)
+            ed = int(product.get("expiryDay",   0) or 0)
+            expiry = (f"{ey}-{str(em).zfill(2)}-{str(ed).zfill(2)}"
+                      if ey and em and ed else "")
+            result.append({
+                "order_id":    str(o.get("orderId", "")),
+                "ticker":      product.get("symbol", "").upper(),
+                "option_type": product.get("callPut", "").upper(),
+                "strike":      float(product.get("strikePrice", 0) or 0),
+                "expiry":      expiry,
+                "status":      status,
+            })
+        return result
+    except Exception as e:
+        logger.warning(f"_fetch_open_close_orders failed: {e}")
+        return []
+
+
+def _conflict_order(ticker, option_type, strike, expiry):
+    """Return the conflicting open close order dict, or None if clear."""
+    for o in _fetch_open_close_orders():
+        if (o["ticker"]      == ticker.upper()
+                and o["option_type"] == option_type.upper()
+                and abs(o["strike"] - float(strike)) < 0.01
+                and o["expiry"]      == expiry):
+            return o
+    return None
+
+
+@app.route("/order/check", methods=["GET"])
+def order_check():
+    """Check whether an open BUY_CLOSE order already exists for a position.
+    Query params: ticker, option_type (PUT|CALL), strike, expiry
+    Returns {conflict: bool, order_id?, message?}
+    """
+    if not _session["connected"]:
+        return jsonify({"error": "Not connected"}), 401
+    ticker      = (request.args.get("ticker", "")      ).upper()
+    option_type = (request.args.get("option_type", "")  ).upper()
+    strike      = float(request.args.get("strike", 0)  or 0)
+    expiry      = request.args.get("expiry", "")
+    if not (ticker and option_type and strike and expiry):
+        return jsonify({"error": "ticker, option_type, strike, expiry required"}), 400
+    conflict = _conflict_order(ticker, option_type, strike, expiry)
+    if conflict:
+        return jsonify({
+            "conflict":  True,
+            "order_id":  conflict["order_id"],
+            "message":   (f"Open BUY_CLOSE order #{conflict['order_id']} already exists "
+                          f"for {ticker} ${strike} {option_type} {expiry}. "
+                          f"Cancel it before placing a new close or roll."),
+        })
+    return jsonify({"conflict": False})
+
+
 @app.route("/order/roll", methods=["POST"])
 def order_roll():
     """
@@ -368,6 +461,15 @@ def order_roll():
     option_type   = data.get("option_type","PUT").upper()
     cur_strike    = float(data.get("cur_strike", 0))
     cur_expiry    = data.get("cur_expiry","")
+
+    # Guard: block if an open BUY_CLOSE order already exists for this position
+    conflict = _conflict_order(ticker, option_type, cur_strike, cur_expiry)
+    if conflict:
+        msg = (f"Open BUY_CLOSE order #{conflict['order_id']} already exists "
+               f"for {ticker} ${cur_strike} {option_type} {cur_expiry}. "
+               f"Cancel it in E*Trade before rolling.")
+        logger.warning(f"ROLL BLOCKED — {msg}")
+        return jsonify({"success": False, "error": msg}), 409
     contracts     = int(data.get("contracts", 1))
     btc_limit     = float(data.get("btc_limit", 0))   # debit to pay
 
